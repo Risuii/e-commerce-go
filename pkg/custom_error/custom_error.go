@@ -2,16 +2,19 @@ package custom_error
 
 import (
 	"errors"
+	"net/http"
 
 	Constants "e-commerce/constants"
 	Library "e-commerce/library"
 )
 
 type CustomError struct {
-	display error
-	plain   error
-	path    string
-	library Library.Library
+	display        error
+	plain          error
+	path           string
+	errValidations []map[string]interface{}
+	library        Library.Library
+	code           int
 }
 
 func New(
@@ -25,6 +28,7 @@ func New(
 		plain:   plain,
 		path:    path,
 		library: library,
+		code:    http.StatusInternalServerError,
 	}
 }
 
@@ -71,6 +75,24 @@ func (e *CustomError) FromListMap(errs []map[string]interface{}) error {
 		)
 	}
 
+	e.errValidations = errs
 	e.plain = errors.New(string(result))
 	return e
+}
+
+func (e *CustomError) GetErrorValidations() []map[string]interface{} {
+	if len(e.errValidations) == 0 {
+		return nil
+	}
+	return e.errValidations
+}
+
+func (e *CustomError) SetCode(code int) error {
+	e.code = code
+
+	return e
+}
+
+func (e *CustomError) GetCode() int {
+	return e.code
 }

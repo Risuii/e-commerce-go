@@ -2,12 +2,12 @@ package request_information
 
 import (
 	"encoding/json"
-	"io/ioutil"
-
-	Constants "e-commerce/constants"
+	"io"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
+
+	Constants "e-commerce/constants"
 )
 
 type RequestInformation struct {
@@ -52,7 +52,7 @@ func (r *RequestInformation) GetRequestInformation(c *gin.Context) map[string]in
 		case Constants.MultiPartFormData:
 			err = c.ShouldBind(&resultMap)
 		case Constants.TextPlain:
-			body, readErr := ioutil.ReadAll(c.Request.Body)
+			body, readErr := io.ReadAll(c.Request.Body)
 			if readErr != nil {
 				err = readErr
 			} else {

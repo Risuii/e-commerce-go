@@ -1,11 +1,9 @@
 package dto
 
-import "time"
-
 type LogActivityParam struct {
-	LogId       string    `json:"log_id"`
-	Endpoint    string    `json:"endpoint"`
-	Path        string    `json:"path"`
-	Description string    `json:"description"`
-	CreatedAt   time.Time `json:"creadted_at"`
+	Message string      `json:"message,omitempty"`
+	Data    interface{} `json:"data,omitempty"`
+	Path    string      `json:"path,omitempty"`
+	Status  bool        `json:"status,omitempty"`
+	TraceID string      `json:"traceID,omitempty"`
 }

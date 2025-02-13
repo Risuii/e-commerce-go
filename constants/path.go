@@ -7,4 +7,12 @@ const (
 
 	// Data Source
 	EcommerceDB = "DB:Ecommerce"
+
+	// Handler
+	UserRegisterHandler = "Handler:RegisterUser"
+
+	// UseCase
+	UserRegisterUseCase = "UseCase:RegisterUser"
+
+	// Repository
 )

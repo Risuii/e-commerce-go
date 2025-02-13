@@ -9,7 +9,9 @@ import (
 
 	Constants "e-commerce/constants"
 
+	User "e-commerce/internal/auth/delivery/presenter/http"
 	Library "e-commerce/library"
+	Middleware "e-commerce/middlewares"
 	UtilsPackage "e-commerce/pkg/utils"
 )
 
@@ -19,17 +21,23 @@ type Routes interface {
 }
 
 type RoutesImpl struct {
-	engine  *gin.Engine
-	library Library.Library
+	engine     *gin.Engine
+	library    Library.Library
+	middleware Middleware.Middleware
+	user       User.UserHandler
 }
 
 func New(
 	engine *gin.Engine,
 	library Library.Library,
+	middleware Middleware.Middleware,
+	user User.UserHandler,
 ) Routes {
 	return &RoutesImpl{
-		engine:  engine,
-		library: library,
+		engine:     engine,
+		library:    library,
+		middleware: middleware,
+		user:       user,
 	}
 }
 
@@ -46,6 +54,7 @@ func (o *RoutesImpl) Setup() {
 	}))
 	// EMBED ROUTES
 	o.SetIndexRoute()
+	o.SetUserRoute()
 }
 
 func (o *RoutesImpl) GetEngine() *gin.Engine {
@@ -63,4 +72,12 @@ func (o *RoutesImpl) SetIndexRoute() {
 
 		c.JSON(http.StatusOK, response)
 	})
+}
+
+func (o *RoutesImpl) SetUserRoute() {
+	router := o.engine.Group("/api/v1/user")
+
+	router.Use(o.middleware.GenerateTraceID(), o.middleware.Logging())
+	router.POST("/register", o.user.Register)
+	router.POST("/login", o.user.Login)
 }

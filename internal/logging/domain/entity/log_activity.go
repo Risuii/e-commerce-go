@@ -5,22 +5,24 @@ import (
 )
 
 type LogActivity struct {
-	TraceId        string
-	Endpoint       string
-	Path           string
-	Description    string
-	CreatedAt      string
-	RequestPayload string
+	TraceID         string
+	Endpoint        string
+	Path            string
+	Description     string
+	CreatedAt       string
+	RequestPayload  string
+	ResponsePayload string
 }
 
 func (e LogActivity) ToModel() *LogModel.LogActivity {
 	result := LogModel.LogActivity{
-		TraceId:        e.TraceId,
-		Endpoint:       e.Endpoint,
-		Path:           e.Path,
-		Description:    e.Description,
-		CreatedAt:      e.CreatedAt,
-		RequestPayload: e.RequestPayload,
+		TraceID:         e.TraceID,
+		Endpoint:        e.Endpoint,
+		Path:            e.Path,
+		Description:     e.Description,
+		CreatedAt:       e.CreatedAt,
+		RequestPayload:  e.RequestPayload,
+		ResponsePayload: e.ResponsePayload,
 	}
 
 	return &result

@@ -9,19 +9,25 @@ import (
 
 	Config "e-commerce/config"
 	Library "e-commerce/library"
+	BcryptPackage "e-commerce/pkg/bcrypt"
 	CryptoPackage "e-commerce/pkg/crypto"
-	Logging "e-commerce/pkg/logger"
+	CustomValidationPackage "e-commerce/pkg/custom_validation"
+
+	EcommercePackage "e-commerce/pkg/data_sources/e-commerce"
 
 	Routes "e-commerce/routes"
+
+	UserRepository "e-commerce/internal/auth/data/repository"
+	UserSource "e-commerce/internal/auth/data/source"
+	UserHandler "e-commerce/internal/auth/delivery/presenter/http"
+	UsertUseCase "e-commerce/internal/auth/domain/usecase"
+
+	LogUsecase "e-commerce/internal/logging/domain/usecase"
 
 	ActivityLogRepository "e-commerce/internal/logging/data/repository"
 	ActivityLogSource "e-commerce/internal/logging/data/source"
 
-	InterfaceLogRepository "e-commerce/internal/logging/data/repository"
-	InterfaceLogSource "e-commerce/internal/logging/data/source"
-
-	OutgoingLogRepository "e-commerce/internal/logging/data/repository"
-	OutgoingLogSource "e-commerce/internal/logging/data/source"
+	Middleware "e-commerce/middlewares"
 )
 
 var ProviderSet = wire.NewSet(
@@ -30,29 +36,33 @@ var ProviderSet = wire.NewSet(
 
 	// PACKAGE
 	CryptoPackage.NewCustomCrypto,
-	Logging.NewLogger,
+	BcryptPackage.NewBcrypt,
+	CustomValidationPackage.NewCustomValidation,
 
 	// DATABASE
+	EcommercePackage.New,
 
 	// DATASOURCE
 	ActivityLogSource.NewLogActivityPersistent,
-	InterfaceLogSource.NewLogInterfacePersistent,
-	OutgoingLogSource.NewLogOutgoingPersistent,
+	UserSource.NewUserImpl,
 
 	// REPOSITORY
-	OutgoingLogRepository.NewLogOutgoing,
-	InterfaceLogRepository.NewLogInterface,
 	ActivityLogRepository.NewLogActivity,
+	UserRepository.NewUser,
 
 	// USECASE
+	UsertUseCase.NewRegisterUseCase,
+	LogUsecase.NewLogUsecase,
 
 	// HANDLER
+	UserHandler.NewUserHandler,
 
 	// PUBLISHER
 
 	// CONSUMER
 
 	// MIDDLEWARE
+	Middleware.NewMiddleware,
 
 	// ROUTE
 	Routes.New,

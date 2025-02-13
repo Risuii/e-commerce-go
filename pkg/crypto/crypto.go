@@ -26,7 +26,7 @@ var (
 )
 
 type CustomCrypto interface {
-	AesEncryptGcmNoPadding(strIn string, key string) (string, error)
+	AesEncryptGcmNoPadding(aesKey string, strIn string) (string, error)
 	AesDecryptGcmNoPadding(aesKey string, encryptedBase64 string) (string, error)
 	GenerateCEK(privateKeyBase64 string, publicKeyBase64 string) (string, error)
 }

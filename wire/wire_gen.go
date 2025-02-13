@@ -7,25 +7,45 @@
 package wire
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/google/wire"
 	"e-commerce/config"
+	repository2 "e-commerce/internal/auth/data/repository"
+	source2 "e-commerce/internal/auth/data/source"
+	"e-commerce/internal/auth/delivery/presenter/http"
+	usecase2 "e-commerce/internal/auth/domain/usecase"
 	"e-commerce/internal/logging/data/repository"
 	"e-commerce/internal/logging/data/source"
+	"e-commerce/internal/logging/domain/usecase"
 	"e-commerce/library"
+	"e-commerce/middlewares"
+	"e-commerce/pkg/bcrypt"
 	"e-commerce/pkg/crypto"
-	"e-commerce/pkg/logger"
+	"e-commerce/pkg/custom_validation"
+	"e-commerce/pkg/data_sources/e-commerce"
 	"e-commerce/routes"
+	"github.com/gin-gonic/gin"
+	"github.com/google/wire"
 )
 
 // Injectors from wire.go:
 
 func InjectRoute(config2 config.Config, library2 library.Library) routes.Routes {
 	engine := gin.New()
-	routesRoutes := routes.New(engine, library2)
+	ecommerceEcommerce := ecommerce.New(config2, library2)
+	logActivity := source.NewLogActivityPersistent(library2, ecommerceEcommerce)
+	repositoryLogActivity := repository.NewLogActivity(logActivity)
+	loggingUsecase := usecase.NewLogUsecase(repositoryLogActivity, library2)
+	middleware := middlewares.NewMiddleware(library2, loggingUsecase)
+	customValidation := custom_validation.NewCustomValidation(config2, library2)
+	customCrypto := utils.NewCustomCrypto(config2, library2)
+	bcrypt := provider.NewBcrypt()
+	user := source2.NewUserImpl(library2, ecommerceEcommerce)
+	userRepository := repository2.NewUser(user)
+	registerUseCase := usecase2.NewRegisterUseCase(library2, customCrypto, config2, bcrypt, repositoryLogActivity, userRepository)
+	userHandler := http.NewUserHandler(library2, customValidation, registerUseCase)
+	routesRoutes := routes.New(engine, library2, middleware, userHandler)
 	return routesRoutes
 }
 
 // wire.go:
 
-var ProviderSet = wire.NewSet(gin.New, utils.NewCustomCrypto, logger.NewLogger, source.NewLogActivityPersistent, source.NewLogInterfacePersistent, source.NewLogOutgoingPersistent, repository.NewLogOutgoing, repository.NewLogInterface, repository.NewLogActivity, routes.New)
+var ProviderSet = wire.NewSet(gin.New, utils.NewCustomCrypto, provider.NewBcrypt, custom_validation.NewCustomValidation, ecommerce.New, source.NewLogActivityPersistent, source2.NewUserImpl, repository.NewLogActivity, repository2.NewUser, usecase2.NewRegisterUseCase, usecase.NewLogUsecase, http.NewUserHandler, middlewares.NewMiddleware, routes.New)
