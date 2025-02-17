@@ -5,4 +5,5 @@ const (
 	Response = "response"
 	Request  = "Request"
 	Title    = "title"
+	Token    = "token"
 )

@@ -1,7 +1,8 @@
 package constants
 
 const (
-	NilString    = ""
-	ShuttingDown = "Shutting Down Successfully"
-	Json         = "json"
+	NilString      = ""
+	ShuttingDown   = "Shutting Down Successfully"
+	Json           = "json"
+	UsernamePrefix = "username:"
 )

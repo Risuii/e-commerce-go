@@ -1,7 +1,7 @@
 include .env
-.PHONY: migration visa-migration
+.PHONY: migration ecommerce-migration
 
-migration: visa-migration
+migration: ecommerce-migration
 
 run:
 	go mod tidy
@@ -14,9 +14,9 @@ test:
 	go test -race -coverprofile cover.out ./internal/...
 	go tool cover -html=cover.out
 
-visa-migration:
+ecommerce-migration:
 	@chmod -R 777 scripts
-	@./scripts/migration.sh	$(CURDIR)/migrations/visa postgres://$(VISAENCAMS_USER):$(PASSWORD_DB_FOR_MAKEFILE)@$(VISAENCAMS_HOST):$(VISAENCAMS_PORT)/$(VISAENCAMS_DATABASE)?sslmode=disable 12 $(target-version)
+	@./scripts/migration.sh	$(CURDIR)/migrations/ecommerce postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_DATABASE)?sslmode=disable $(DB_LAST_MIGRATION_VERSION) $(target-version)
 
 generate-mig-dev:
 	@chmod +x export_git_files_to_csv_development.sh

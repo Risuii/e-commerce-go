@@ -5,4 +5,6 @@ type ConfigModel struct {
 	DB         DbConfigModel
 	DBCon      Ecommerce
 	EncryptKey EncryptKey
+	JWE        JWEConfig
+	Redis      RedisConfig
 }

@@ -134,7 +134,6 @@ func (m *MiddlewareImpl) Logging() gin.HandlerFunc {
 			return
 		}
 
-		// Menulis hanya token terenkripsi tanpa body lama
 		responseData.Path = Constants.NilString
 		response, err := m.library.JsonMarshal(responseData)
 		if err != nil {

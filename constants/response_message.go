@@ -1,6 +1,6 @@
 package constants
 
 const (
-	MsgSuccessRequest     = "Permintaan berhasil diproses"
-	MsgSuccessSaveRequest = "Data berhasil disimpan"
+	MsgSuccessRequest     = "Successfully processed the request"
+	MsgSuccessSaveRequest = "Successfully save data"
 )

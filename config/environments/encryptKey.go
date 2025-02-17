@@ -1,5 +1,5 @@
 package environments
 
 type EncryptKey struct {
-	EncryptKey string `env-required:"true" env:"EncryptKey"`
+	EncryptKey string `env-required:"true" env:"ENCRYPT_KEY"`
 }

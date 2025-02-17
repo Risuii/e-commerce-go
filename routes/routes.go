@@ -7,9 +7,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
-	Constants "e-commerce/constants"
-
-	User "e-commerce/internal/auth/delivery/presenter/http"
+	User "e-commerce/internal/authentication/delivery/presenter/http"
 	Library "e-commerce/library"
 	Middleware "e-commerce/middlewares"
 	UtilsPackage "e-commerce/pkg/utils"
@@ -42,7 +40,7 @@ func New(
 }
 
 func (o *RoutesImpl) Setup() {
-	path := Constants.Routes
+	path := "Routes:Setup"
 	defer UtilsPackage.CatchPanic(path, o.library)
 	// SETUP CORS
 	o.engine.Use(cors.New(cors.Config{

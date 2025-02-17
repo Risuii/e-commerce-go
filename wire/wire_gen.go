@@ -8,19 +8,23 @@ package wire
 
 import (
 	"e-commerce/config"
-	repository2 "e-commerce/internal/auth/data/repository"
-	source2 "e-commerce/internal/auth/data/source"
-	"e-commerce/internal/auth/delivery/presenter/http"
-	usecase2 "e-commerce/internal/auth/domain/usecase"
+	repository3 "e-commerce/internal/authentication/data/repository"
+	source3 "e-commerce/internal/authentication/data/source"
+	"e-commerce/internal/authentication/delivery/presenter/http"
+	usecase2 "e-commerce/internal/authentication/domain/usecase"
 	"e-commerce/internal/logging/data/repository"
 	"e-commerce/internal/logging/data/source"
 	"e-commerce/internal/logging/domain/usecase"
+	repository2 "e-commerce/internal/user/data/repository"
+	source2 "e-commerce/internal/user/data/source"
 	"e-commerce/library"
 	"e-commerce/middlewares"
 	"e-commerce/pkg/bcrypt"
 	"e-commerce/pkg/crypto"
 	"e-commerce/pkg/custom_validation"
 	"e-commerce/pkg/data_sources/e-commerce"
+	"e-commerce/pkg/data_sources/redis"
+	"e-commerce/pkg/jwe"
 	"e-commerce/routes"
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
@@ -41,11 +45,16 @@ func InjectRoute(config2 config.Config, library2 library.Library) routes.Routes 
 	user := source2.NewUserImpl(library2, ecommerceEcommerce)
 	userRepository := repository2.NewUser(user)
 	registerUseCase := usecase2.NewRegisterUseCase(library2, customCrypto, config2, bcrypt, repositoryLogActivity, userRepository)
-	userHandler := http.NewUserHandler(library2, customValidation, registerUseCase)
+	jwe := jwt.NewJWE(config2, library2)
+	redis := cache_data_source.New(config2, library2)
+	authenticationMemory := source3.NewAuthenticationMemory(config2, library2, redis)
+	authenticationRepository := repository3.NewAuthenticationRepository(library2, authenticationMemory)
+	loginUsecase := usecase2.NewLoginUsecase(jwe, bcrypt, customCrypto, library2, config2, userRepository, authenticationRepository)
+	userHandler := http.NewUserHandler(library2, customValidation, registerUseCase, loginUsecase)
 	routesRoutes := routes.New(engine, library2, middleware, userHandler)
 	return routesRoutes
 }
 
 // wire.go:
 
-var ProviderSet = wire.NewSet(gin.New, utils.NewCustomCrypto, provider.NewBcrypt, custom_validation.NewCustomValidation, ecommerce.New, source.NewLogActivityPersistent, source2.NewUserImpl, repository.NewLogActivity, repository2.NewUser, usecase2.NewRegisterUseCase, usecase.NewLogUsecase, http.NewUserHandler, middlewares.NewMiddleware, routes.New)
+var ProviderSet = wire.NewSet(gin.New, utils.NewCustomCrypto, provider.NewBcrypt, custom_validation.NewCustomValidation, jwt.NewJWE, ecommerce.New, cache_data_source.New, source.NewLogActivityPersistent, source2.NewUserImpl, source3.NewAuthenticationMemory, repository.NewLogActivity, repository2.NewUser, repository3.NewAuthenticationRepository, usecase2.NewRegisterUseCase, usecase2.NewLoginUsecase, usecase.NewLogUsecase, http.NewUserHandler, middlewares.NewMiddleware, routes.New)

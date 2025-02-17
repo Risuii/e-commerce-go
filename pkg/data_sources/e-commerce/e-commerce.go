@@ -35,7 +35,7 @@ var (
 
 func New(config Config.Config, library Library.Library) Ecommerce {
 	EcommerceOnce.Do(func() {
-		path := Constants.EcommerceDB
+		path := "E-commerce:New"
 		// Setup configuration string
 		setup := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Jakarta",
 			config.GetConfig().DBCon.Host,

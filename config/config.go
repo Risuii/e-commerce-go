@@ -30,7 +30,7 @@ func New(
 }
 
 func (o *ConfigImpl) Setup() error {
-	path := Constants.Config
+	path := "Config:Setup"
 	// GET PROJECT DIRECTORY
 	directory, err := os.Getwd()
 	// WHEN GET DIRECTORY RETURNS ERROR

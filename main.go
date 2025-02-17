@@ -20,7 +20,7 @@ import (
 )
 
 func main() {
-	path := Constants.Main
+	path := "main"
 	// INIT LIBRARY
 	library := Library.New()
 	// INIT CONFIGURATION

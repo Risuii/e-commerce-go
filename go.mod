@@ -7,10 +7,11 @@ toolchain go1.23.5
 require (
 	github.com/PuerkitoBio/goquery v1.10.1
 	github.com/avct/uasurfer v0.0.0-20240501094946-ca0c4d1e541b
+	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/golang-jwt/jwt/v4 v4.5.0
-	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.6.0
 	github.com/ilyakaznacheev/cleanenv v1.5.0
+	github.com/lestrrat-go/jwx/v2 v2.1.3
 	github.com/lib/pq v1.10.9
 	github.com/xuri/excelize/v2 v2.9.0
 	gorm.io/driver/postgres v1.5.9
@@ -22,6 +23,7 @@ require (
 	github.com/antihax/optional v1.0.0 // indirect
 	github.com/bytedance/sonic/loader v0.2.2 // indirect
 	github.com/cloudwego/base64x v0.1.5 // indirect
+	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.3.0 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
@@ -29,11 +31,18 @@ require (
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
+	github.com/lestrrat-go/blackmagic v1.0.2 // indirect
+	github.com/lestrrat-go/httpcc v1.0.1 // indirect
+	github.com/lestrrat-go/httprc v1.0.6 // indirect
+	github.com/lestrrat-go/iter v1.0.2 // indirect
+	github.com/lestrrat-go/option v1.0.1 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
+	github.com/onsi/ginkgo v1.16.5 // indirect
+	github.com/onsi/gomega v1.36.2 // indirect
 	github.com/richardlehane/mscfb v1.0.4 // indirect
 	github.com/richardlehane/msoleps v1.0.4 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
-	github.com/stretchr/testify v1.9.0 // indirect
+	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/xuri/efp v0.0.0-20240408161823-9ad904a10d6d // indirect
 	github.com/xuri/nfp v0.0.0-20240318013403-ab9948c2c4a7 // indirect
 	golang.org/x/oauth2 v0.18.0 // indirect
@@ -72,7 +81,7 @@ require (
 	golang.org/x/net v0.33.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
-	google.golang.org/protobuf v1.34.2 // indirect
+	google.golang.org/protobuf v1.36.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	olympos.io/encoding/edn v0.0.0-20201019073823-d3554ca0b0a3 // indirect
 )

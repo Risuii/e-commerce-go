@@ -56,6 +56,8 @@ func (u *CustomValidationImpl) GetValidator() *validator.Validate {
 	u.validator.RegisterValidation(Constants.ValidationValueNumeric, u.ValidateValueNumeric)
 	u.validator.RegisterValidation(Constants.ValidationAlphaNumeric, u.ValidationAlphaNumeric)
 	u.validator.RegisterValidation(Constants.ValidationUnixTime, u.Unixtime)
+	u.validator.RegisterValidation(Constants.ValidationEmailRequiredWithout, u.ValidationEmailRequiredWithout)
+	u.validator.RegisterValidation(Constants.ValidationAlphanumericRequiredWithout, u.ValidationAlphaNumericRequiredWithout)
 	return u.validator
 }
 
@@ -154,6 +156,16 @@ func (u *CustomValidationImpl) GetCustomErrorMessage(validationErrors validator.
 				"message": u.library.Sprintf(Constants.ErrDataTypeInvalid.Error(), fieldName),
 			})
 		case Constants.ValidationAlphaNumeric:
+			errors = append(errors, map[string]interface{}{
+				"field":   verr.Field(),
+				"message": Constants.ErrAlphaNumeric.Error(),
+			})
+		case Constants.ValidationEmailRequiredWithout:
+			errors = append(errors, map[string]interface{}{
+				"field":   verr.Field(),
+				"message": Constants.ErrEmail.Error(),
+			})
+		case Constants.ValidationAlphanumericRequiredWithout:
 			errors = append(errors, map[string]interface{}{
 				"field":   verr.Field(),
 				"message": Constants.ErrAlphaNumeric.Error(),
@@ -441,5 +453,59 @@ func (u *CustomValidationImpl) Unixtime(fl validator.FieldLevel) bool {
 	if time <= 0 {
 		return false
 	}
+	return true
+}
+
+func (u *CustomValidationImpl) ValidationEmailRequiredWithout(fl validator.FieldLevel) bool {
+	email := fl.Field().String()
+
+	if email != "" {
+		emailRegex := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
+		matched, _ := regexp.MatchString(emailRegex, email)
+		if !matched {
+			return false
+		}
+	}
+
+	parent := fl.Parent()
+
+	otherFieldName := fl.Param()
+
+	otherField := parent.FieldByName(otherFieldName)
+	if !otherField.IsValid() {
+		return false
+	}
+
+	if email == "" && otherField.String() == "" {
+		return false
+	}
+
+	return true
+}
+
+func (u *CustomValidationImpl) ValidationAlphaNumericRequiredWithout(fl validator.FieldLevel) bool {
+	value := fl.Field().String()
+
+	if value != "" {
+		regex := `^[a-zA-Z0-9]+$`
+		matched, _ := regexp.MatchString(regex, value)
+		if !matched {
+			return false
+		}
+	}
+
+	parent := fl.Parent()
+
+	otherFieldName := fl.Param()
+
+	otherField := parent.FieldByName(otherFieldName)
+	if !otherField.IsValid() {
+		return false
+	}
+
+	if value == "" && otherField.String() == "" {
+		return false
+	}
+
 	return true
 }
