@@ -34,27 +34,28 @@ import (
 
 func InjectRoute(config2 config.Config, library2 library.Library) routes.Routes {
 	engine := gin.New()
+	jwe := jwt.NewJWE(config2, library2)
 	ecommerceEcommerce := ecommerce.New(config2, library2)
 	logActivity := source.NewLogActivityPersistent(library2, ecommerceEcommerce)
 	repositoryLogActivity := repository.NewLogActivity(logActivity)
 	loggingUsecase := usecase.NewLogUsecase(repositoryLogActivity, library2)
-	middleware := middlewares.NewMiddleware(library2, loggingUsecase)
+	middleware := middlewares.NewMiddleware(config2, library2, jwe, loggingUsecase)
 	customValidation := custom_validation.NewCustomValidation(config2, library2)
 	customCrypto := utils.NewCustomCrypto(config2, library2)
 	bcrypt := provider.NewBcrypt()
 	user := source2.NewUserImpl(library2, ecommerceEcommerce)
 	userRepository := repository2.NewUser(user)
 	registerUseCase := usecase2.NewRegisterUseCase(library2, customCrypto, config2, bcrypt, repositoryLogActivity, userRepository)
-	jwe := jwt.NewJWE(config2, library2)
 	redis := cache_data_source.New(config2, library2)
 	authenticationMemory := source3.NewAuthenticationMemory(config2, library2, redis)
 	authenticationRepository := repository3.NewAuthenticationRepository(library2, authenticationMemory)
 	loginUsecase := usecase2.NewLoginUsecase(jwe, bcrypt, customCrypto, library2, config2, userRepository, authenticationRepository)
-	userHandler := http.NewUserHandler(library2, customValidation, registerUseCase, loginUsecase)
+	logoutUsecase := usecase2.NewLogoutUsecase(library2, authenticationRepository)
+	userHandler := http.NewUserHandler(library2, customValidation, registerUseCase, loginUsecase, logoutUsecase)
 	routesRoutes := routes.New(engine, library2, middleware, userHandler)
 	return routesRoutes
 }
 
 // wire.go:
 
-var ProviderSet = wire.NewSet(gin.New, utils.NewCustomCrypto, provider.NewBcrypt, custom_validation.NewCustomValidation, jwt.NewJWE, ecommerce.New, cache_data_source.New, source.NewLogActivityPersistent, source2.NewUserImpl, source3.NewAuthenticationMemory, repository.NewLogActivity, repository2.NewUser, repository3.NewAuthenticationRepository, usecase2.NewRegisterUseCase, usecase2.NewLoginUsecase, usecase.NewLogUsecase, http.NewUserHandler, middlewares.NewMiddleware, routes.New)
+var ProviderSet = wire.NewSet(gin.New, utils.NewCustomCrypto, provider.NewBcrypt, custom_validation.NewCustomValidation, jwt.NewJWE, ecommerce.New, cache_data_source.New, source.NewLogActivityPersistent, source2.NewUserImpl, source3.NewAuthenticationMemory, repository.NewLogActivity, repository2.NewUser, repository3.NewAuthenticationRepository, usecase2.NewRegisterUseCase, usecase2.NewLoginUsecase, usecase2.NewLogoutUsecase, usecase.NewLogUsecase, http.NewUserHandler, middlewares.NewMiddleware, routes.New)

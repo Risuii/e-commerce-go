@@ -18,11 +18,10 @@ import (
 	CryptoPackage "e-commerce/pkg/crypto"
 	CustomErrorPackage "e-commerce/pkg/custom_error"
 	ExecutionResultPackage "e-commerce/pkg/execution_result"
-	RequestPackage "e-commerce/pkg/request_information"
 )
 
 type RegisterUseCase interface {
-	Index(requestInfo RequestPackage.RequestInformation, param AuthDTO.RegisterParam) error
+	Index(param AuthDTO.RegisterParam) error
 }
 
 type RegisterUseCaseImpl struct {
@@ -52,7 +51,7 @@ func NewRegisterUseCase(
 	}
 }
 
-func (u *RegisterUseCaseImpl) Index(requestInfo RequestPackage.RequestInformation, param AuthDTO.RegisterParam) error {
+func (u *RegisterUseCaseImpl) Index(param AuthDTO.RegisterParam) error {
 	path := "RegisterUsecase:Index"
 
 	// MAKE CHANNEL
@@ -102,8 +101,10 @@ func (u *RegisterUseCaseImpl) Index(requestInfo RequestPackage.RequestInformatio
 func (u *RegisterUseCaseImpl) GenerateID(resultChannel chan ExecutionResultPackage.ExecutionResult) {
 	path := "RegisterUsecase:GenerateID"
 
+	// INIT CHANNEL
 	result := ExecutionResultPackage.ExecutionResult{}
 
+	// GENERATE UUID FOR ID
 	id, err := u.library.GenerateUUID()
 	if err != nil {
 		result.SetResult(nil, err.(*CustomErrorPackage.CustomError).UnshiftPath(path))
@@ -112,6 +113,7 @@ func (u *RegisterUseCaseImpl) GenerateID(resultChannel chan ExecutionResultPacka
 		return
 	}
 
+	// SET UUID TO CHANNEL
 	result.SetResult(id, nil)
 	resultChannel <- result
 	close(resultChannel)
@@ -120,8 +122,10 @@ func (u *RegisterUseCaseImpl) GenerateID(resultChannel chan ExecutionResultPacka
 func (u *RegisterUseCaseImpl) GetDetailUsers(username string, resultChannel chan ExecutionResultPackage.ExecutionResult) {
 	path := "RegisterUsecase:GetDetailUsers"
 
+	// INIT CHANNEL
 	result := ExecutionResultPackage.ExecutionResult{}
 
+	// GET USER DATA
 	entity, err := u.userRepository.GetDetailUsers(strings.ToLower(username), Constants.NilString)
 	if err != nil {
 		result.SetResult(nil, err.(*CustomErrorPackage.CustomError).UnshiftPath(path))
@@ -130,6 +134,7 @@ func (u *RegisterUseCaseImpl) GetDetailUsers(username string, resultChannel chan
 		return
 	}
 
+	// SET USER DATA TO CHANNEL
 	result.SetResult(entity, nil)
 	resultChannel <- result
 	close(resultChannel)
@@ -138,8 +143,10 @@ func (u *RegisterUseCaseImpl) GetDetailUsers(username string, resultChannel chan
 func (u *RegisterUseCaseImpl) HashPassword(password string, resultChannel chan ExecutionResultPackage.ExecutionResult) {
 	path := "RegisterUsecase:HashPassword"
 
+	// INIT CHANNEL
 	result := ExecutionResultPackage.ExecutionResult{}
 
+	// HASHING PASSWORD
 	hashedPassword, err := u.bcrypty.GenerateFromPassword(context.Background(), []byte(password))
 	if err != nil {
 		result.SetResult(nil, err.(*CustomErrorPackage.CustomError).UnshiftPath(path))
@@ -148,6 +155,7 @@ func (u *RegisterUseCaseImpl) HashPassword(password string, resultChannel chan E
 		return
 	}
 
+	// ENCRYPT HASHED PASSWORD
 	encryptedPassword, err := u.crypto.AesEncryptGcmNoPadding(u.config.GetConfig().EncryptKey.EncryptKey, string(hashedPassword))
 	if err != nil {
 		result.SetResult(nil, err.(*CustomErrorPackage.CustomError).UnshiftPath(path))
@@ -156,8 +164,10 @@ func (u *RegisterUseCaseImpl) HashPassword(password string, resultChannel chan E
 		return
 	}
 
+	// ENCODED ENCRYPTED HASHED PASSWORD
 	encodePassword := base64.StdEncoding.EncodeToString([]byte(encryptedPassword))
 
+	// SET PASSWORD TO CHANNEL
 	result.SetResult(encodePassword, nil)
 	resultChannel <- result
 	close(resultChannel)
@@ -166,6 +176,7 @@ func (u *RegisterUseCaseImpl) HashPassword(password string, resultChannel chan E
 func (u *RegisterUseCaseImpl) Insert(id, password, email string, param AuthDTO.RegisterParam) error {
 	path := "RegisterUsecase:Insert"
 
+	// INIT ENTITY USER
 	userData := UserEntity.User{
 		Uuid:      id,
 		Email:     email,
@@ -174,6 +185,7 @@ func (u *RegisterUseCaseImpl) Insert(id, password, email string, param AuthDTO.R
 		CreatedAt: time.Now().Format(Constants.YYYMMDDHHMMSS),
 	}
 
+	// INSERT ENTITY USER TO DB
 	err := u.userRepository.Insert(&userData)
 	if err != nil {
 		return err.(*CustomErrorPackage.CustomError).UnshiftPath(path)

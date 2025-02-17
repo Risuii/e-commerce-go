@@ -34,21 +34,25 @@ func NewLogUsecase(
 func (u *LoggingUsecaseImpl) Index(traceID, pathURL string, request, response []byte) (*LogDTO.LogActivityParam, error) {
 	path := "LogActivityUsecase:Index"
 
+	// UNMARSHAL RESPONSE
 	var logData LogDTO.LogActivityParam
 	err := u.library.JsonUnmarshal(response, &logData)
 	if err != nil {
 		return nil, err.(*CustomErrorPackage.CustomError).UnshiftPath(path)
 	}
 
+	// MARSHAL FIELD DATA RESPONSE
 	responseData, err := u.library.JsonMarshal(logData.Data)
 	if err != nil {
 		return nil, err.(*CustomErrorPackage.CustomError).UnshiftPath(path)
 	}
 
+	// REMOVE REQUEST IF RESPONSE FROM API REGISTER OR LOGIN
 	if pathURL == "/api/v1/user/register" || pathURL == "/api/v1/user/login" {
 		request = nil
 	}
 
+	// SET ENTITY LOGGING
 	dataLog := LogEntity.LogActivity{
 		TraceID:         traceID,
 		Endpoint:        pathURL,
@@ -59,6 +63,7 @@ func (u *LoggingUsecaseImpl) Index(traceID, pathURL string, request, response []
 		ResponsePayload: UtilsPackage.TernaryOperator(logData.Data == nil, string(response), string(responseData)),
 	}
 
+	// INSERT ENTITY LOGGING TO DB
 	go u.logRepository.CreateLog(dataLog)
 
 	return &logData, nil

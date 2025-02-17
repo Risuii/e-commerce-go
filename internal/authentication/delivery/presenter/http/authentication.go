@@ -19,6 +19,7 @@ import (
 type UserHandler interface {
 	Register(*gin.Context)
 	Login(*gin.Context)
+	Logout(*gin.Context)
 }
 
 type UserHandlerImpl struct {
@@ -26,18 +27,21 @@ type UserHandlerImpl struct {
 	customValidation CustomValidationPackage.CustomValidation
 	registerUsecase  AuthenticationUsecase.RegisterUseCase
 	loginUsecase     AuthenticationUsecase.LoginUsecase
+	logoutUsecase    AuthenticationUsecase.LogoutUsecase
 }
 
 func NewUserHandler(library Library.Library,
 	customValidation CustomValidationPackage.CustomValidation,
 	registerUsecase AuthenticationUsecase.RegisterUseCase,
 	loginUsecase AuthenticationUsecase.LoginUsecase,
+	logoutUsecase AuthenticationUsecase.LogoutUsecase,
 ) UserHandler {
 	return &UserHandlerImpl{
 		library:          library,
 		customValidation: customValidation,
 		registerUsecase:  registerUsecase,
 		loginUsecase:     loginUsecase,
+		logoutUsecase:    logoutUsecase,
 	}
 }
 
@@ -58,7 +62,6 @@ func (h *UserHandlerImpl) Register(c *gin.Context) {
 	if !exists {
 		err := CustomErrorPackage.New(Constants.ErrValidation, nil, path, h.library)
 		response = &gin.H{
-			Constants.TraceID: traceID,
 			Constants.Path:    path,
 			Constants.Message: Constants.ErrEmptyTraceID.Error(),
 		}
@@ -92,7 +95,7 @@ func (h *UserHandlerImpl) Register(c *gin.Context) {
 
 	// LOGIC USECASE
 	usecase := h.registerUsecase
-	err := usecase.Index(requestInformation, param)
+	err := usecase.Index(param)
 	if err != nil {
 		response = &gin.H{
 			Constants.TraceID: traceID,
@@ -132,7 +135,6 @@ func (h *UserHandlerImpl) Login(c *gin.Context) {
 	if !exists {
 		err := CustomErrorPackage.New(Constants.ErrValidation, nil, path, h.library)
 		response = &gin.H{
-			Constants.TraceID: traceID,
 			Constants.Path:    path,
 			Constants.Message: Constants.ErrEmptyTraceID.Error(),
 		}
@@ -166,7 +168,7 @@ func (h *UserHandlerImpl) Login(c *gin.Context) {
 
 	// LOGIC USECASE
 	usecase := h.loginUsecase
-	token, err := usecase.Index(requestInformation, param, traceID.(string))
+	token, err := usecase.Index(param)
 	if err != nil {
 		response = &gin.H{
 			Constants.TraceID: traceID,
@@ -185,6 +187,96 @@ func (h *UserHandlerImpl) Login(c *gin.Context) {
 		Constants.Message: Constants.MsgSuccessRequest,
 		Constants.Path:    requestInformation.Path,
 		Constants.Token:   token,
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+func (h *UserHandlerImpl) Logout(c *gin.Context) {
+	path := "AuthenticationHandler:Logout"
+
+	var response *gin.H
+
+	// INIT PARAM
+	var param AuthDTO.LogoutParam
+
+	// GET REQUEST
+	requestInformation := RequestPackage.RequestInformation{}
+	request := requestInformation.GetRequestInformation(c)
+
+	// GET TRACEID
+	traceID, exists := c.Get(Constants.TraceID)
+	if !exists {
+		err := CustomErrorPackage.New(Constants.ErrValidation, nil, path, h.library)
+		response = &gin.H{
+			Constants.Path:    path,
+			Constants.Message: Constants.ErrEmptyTraceID.Error(),
+		}
+		LoggerPackage.WriteLog(logrus.Fields{
+			Constants.Path:     err.(*CustomErrorPackage.CustomError).GetPath(),
+			Constants.Request:  request,
+			Constants.Response: response,
+		}).Debug()
+
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	// GET CREDENTIAL
+	credential, exists := c.Get(Constants.Credential)
+	if !exists {
+		err := CustomErrorPackage.New(Constants.ErrValidation, nil, path, h.library)
+		response = &gin.H{
+			Constants.TraceID: traceID,
+			Constants.Path:    path,
+			Constants.Message: Constants.ErrEmptyCredential.Error(),
+		}
+		LoggerPackage.WriteLog(logrus.Fields{
+			Constants.Path:     err.(*CustomErrorPackage.CustomError).GetPath(),
+			Constants.Request:  request,
+			Constants.Response: response,
+		}).Debug()
+
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+	if err := h.library.JsonUnmarshal(credential.([]byte), &param); err != nil {
+		err := CustomErrorPackage.New(Constants.ErrValidation, nil, path, h.library)
+		response = &gin.H{
+			Constants.TraceID: traceID,
+			Constants.Path:    path,
+			Constants.Message: Constants.ErrEmptyCredential.Error(),
+		}
+		LoggerPackage.WriteLog(logrus.Fields{
+			Constants.Path:     err.(*CustomErrorPackage.CustomError).GetPath(),
+			Constants.Request:  request,
+			Constants.Response: response,
+		}).Debug()
+
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	// LOGIC USECASE
+	usecase := h.logoutUsecase
+	err := usecase.Index(&param)
+	if err != nil {
+		response = &gin.H{
+			Constants.TraceID: traceID,
+			Constants.Path:    err.(*CustomErrorPackage.CustomError).GetPath(),
+			Constants.Message: err.(*CustomErrorPackage.CustomError).GetDisplay().Error(),
+		}
+
+		c.JSON(err.(*CustomErrorPackage.CustomError).GetCode(), response)
+		c.Abort()
+		return
+	}
+
+	// RESPONSE
+	response = &gin.H{
+		Constants.TraceID: traceID,
+		Constants.Path:    requestInformation.Path,
+		Constants.Message: Constants.MsgSuccessRequest,
 	}
 
 	c.JSON(http.StatusOK, response)

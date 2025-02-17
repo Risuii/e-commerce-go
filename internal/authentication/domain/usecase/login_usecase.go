@@ -22,12 +22,11 @@ import (
 	CustomErrorPackage "e-commerce/pkg/custom_error"
 	ExecutionResultPackage "e-commerce/pkg/execution_result"
 	JWEPackage "e-commerce/pkg/jwe"
-	RequestPackage "e-commerce/pkg/request_information"
 	UtilsPackage "e-commerce/pkg/utils"
 )
 
 type LoginUsecase interface {
-	Index(requestInfo RequestPackage.RequestInformation, param AuthDTO.LoginParam, traceID string) (string, error)
+	Index(param AuthDTO.LoginParam) (string, error)
 }
 
 type LoginUsecaseImpl struct {
@@ -60,7 +59,7 @@ func NewLoginUsecase(
 	}
 }
 
-func (u *LoginUsecaseImpl) Index(requestInfo RequestPackage.RequestInformation, param AuthDTO.LoginParam, traceID string) (string, error) {
+func (u *LoginUsecaseImpl) Index(param AuthDTO.LoginParam) (string, error) {
 	path := "LoginUsecase:Index"
 
 	// CHECKING REDIS

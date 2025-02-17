@@ -3,6 +3,7 @@ package jwt
 import (
 	"encoding/base64"
 	"encoding/json"
+	"time"
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/lestrrat-go/jwx/v2/jwa"
@@ -42,6 +43,11 @@ type CustomClaims struct {
 
 func (j *JWEImpl) JWEGenerateToken(claims jwt.MapClaims, secretKey string) (string, error) {
 	path := "JWTPacakge:JWEGenerateToken"
+
+	// ADD EXPIRE TIME
+	expirationTime := time.Now().Add(j.config.GetConfig().JWE.ExpiryDuration)
+	claims[Constants.Expired] = expirationTime.Unix()
+
 	// Decode the API key
 	decodedKey, err := base64.StdEncoding.DecodeString(secretKey)
 	if err != nil {
@@ -75,6 +81,7 @@ func (j *JWEImpl) JWEGenerateToken(claims jwt.MapClaims, secretKey string) (stri
 
 func (j *JWEImpl) JWEValidateToken(token []byte, secretKey string) ([]byte, error) {
 	path := "JWTPacakge:JWEValidateToken"
+
 	// Decode the API key
 	decodedKey, err := base64.StdEncoding.DecodeString(secretKey)
 	if err != nil {
@@ -102,6 +109,15 @@ func (j *JWEImpl) JWEValidateToken(token []byte, secretKey string) ([]byte, erro
 		return nil, CustomErrorPackage.New(Constants.ErrUnmarshalClaim, err, path, j.library)
 	}
 
+	// Validasi expired (cek jika ada klaim 'exp')
+	if exp, ok := claims[Constants.Expired].(float64); ok {
+		expirationTime := time.Unix(int64(exp), 0)
+		if time.Now().After(expirationTime) {
+			return nil, CustomErrorPackage.New(Constants.ErrInvalidJWE, Constants.ErrInvalidJWE, path, j.library)
+		}
+	}
+
+	// Marshal kembali claims jika diperlukan
 	claimsData, err := json.Marshal(claims)
 	if err != nil {
 		return nil, err

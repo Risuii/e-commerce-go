@@ -62,6 +62,7 @@ var ProviderSet = wire.NewSet(
 	// USECASE
 	AuthenticationUsecase.NewRegisterUseCase,
 	AuthenticationUsecase.NewLoginUsecase,
+	AuthenticationUsecase.NewLogoutUsecase,
 	LogUsecase.NewLogUsecase,
 
 	// HANDLER

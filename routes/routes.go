@@ -78,4 +78,8 @@ func (o *RoutesImpl) SetUserRoute() {
 	router.Use(o.middleware.GenerateTraceID(), o.middleware.Logging())
 	router.POST("/register", o.user.Register)
 	router.POST("/login", o.user.Login)
+
+	logout := o.engine.Group("/api/v1/user")
+	logout.Use(o.middleware.GenerateTraceID(), o.middleware.ValidateToken(), o.middleware.Logging())
+	logout.POST("/logout", o.user.Logout)
 }
