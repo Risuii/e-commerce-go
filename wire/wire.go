@@ -27,6 +27,13 @@ import (
 	UserRepository "e-commerce/internal/user/data/repository"
 	UserSource "e-commerce/internal/user/data/source"
 
+	StoreRepository "e-commerce/internal/store/data/repository"
+	StoreSource "e-commerce/internal/store/data/source"
+	StoreHandler "e-commerce/internal/store/delivery/presenter/http"
+	StoreUsecase "e-commerce/internal/store/domain/usecase"
+
+	ProductHandler "e-commerce/internal/product/delivery/presenter/http"
+
 	LogUsecase "e-commerce/internal/logging/domain/usecase"
 
 	ActivityLogRepository "e-commerce/internal/logging/data/repository"
@@ -51,22 +58,29 @@ var ProviderSet = wire.NewSet(
 
 	// DATASOURCE
 	ActivityLogSource.NewLogActivityPersistent,
-	UserSource.NewUserImpl,
+	UserSource.NewUserPersistent,
 	AuthenticationSource.NewAuthenticationMemory,
+	StoreSource.NewStorePersistent,
 
 	// REPOSITORY
 	ActivityLogRepository.NewLogActivity,
-	UserRepository.NewUser,
+	UserRepository.NewUserRepository,
 	AuthenticationRepository.NewAuthenticationRepository,
+	StoreRepository.NewStoreRepository,
 
 	// USECASE
 	AuthenticationUsecase.NewRegisterUseCase,
 	AuthenticationUsecase.NewLoginUsecase,
 	AuthenticationUsecase.NewLogoutUsecase,
 	LogUsecase.NewLogUsecase,
+	StoreUsecase.NewCreateStoreUsecase,
+	StoreUsecase.NewUpdateStoreUsecase,
+	StoreUsecase.NewGetStoreUsecase,
 
 	// HANDLER
 	AuthenticationHandler.NewUserHandler,
+	StoreHandler.NewStoreHandler,
+	ProductHandler.NewProductHandler,
 
 	// PUBLISHER
 

@@ -81,7 +81,6 @@ func (u *LoginUsecaseImpl) Index(param AuthDTO.LoginParam) (string, error) {
 
 	// DO GOROUTINE
 	go u.GetDetailUsers(param.Username, param.Email, UserChannel)
-	go u.GenerateJWE(param.Username, param.Email, JWEChannel)
 
 	// GET USER DATA FROM CHANNEL
 	UserDetail := <-UserChannel
@@ -94,6 +93,9 @@ func (u *LoginUsecaseImpl) Index(param AuthDTO.LoginParam) (string, error) {
 		err.(*CustomErrorPackage.CustomError).SetCode(http.StatusUnauthorized)
 		return Constants.NilString, err.(*CustomErrorPackage.CustomError).UnshiftPath(path)
 	}
+
+	// DO GOROUTINE
+	go u.GenerateJWE(param.Username, param.Email, user.Uuid, JWEChannel)
 
 	// GET JWE FROM CHANNEL
 	JWEDetail := <-JWEChannel
@@ -109,11 +111,9 @@ func (u *LoginUsecaseImpl) Index(param AuthDTO.LoginParam) (string, error) {
 		return Constants.NilString, err.(*CustomErrorPackage.CustomError).UnshiftPath(path)
 	}
 
-	// INIT CHANNEL FOR STORE TOKEN TO REDIS
-	storeJWEChannel := make(chan ExecutionResultPackage.ExecutionResult)
-
 	// DO GOROUTINE
-	go u.StoreToken(token, UtilsPackage.TernaryOperator(param.Username != Constants.NilString, param.Username, param.Email), u.config.GetConfig().JWE.ExpiryDuration, storeJWEChannel)
+	go u.StoreToken(token, UtilsPackage.TernaryOperator(param.Username != Constants.NilString, param.Username, param.Email), u.config.GetConfig().JWE.ExpiryDuration)
+	go u.userRepository.UpdateLastLogin(user.Uuid, time.Now().Format(Constants.YYYMMDDHHMMSS))
 
 	return token, nil
 }
@@ -158,7 +158,7 @@ func (u *LoginUsecaseImpl) GetDetailUsers(username, email string, resultChannel 
 	close(resultChannel)
 }
 
-func (u *LoginUsecaseImpl) GenerateJWE(username, email string, resultChannel chan ExecutionResultPackage.ExecutionResult) {
+func (u *LoginUsecaseImpl) GenerateJWE(username, email, userID string, resultChannel chan ExecutionResultPackage.ExecutionResult) {
 	path := "LoginUsecase:GenerateJWE"
 
 	result := ExecutionResultPackage.ExecutionResult{}
@@ -167,6 +167,7 @@ func (u *LoginUsecaseImpl) GenerateJWE(username, email string, resultChannel cha
 	claims := jwt.MapClaims{
 		Constants.Username: username,
 		Constants.Email:    email,
+		Constants.UserID:   userID,
 	}
 
 	// GENERATE JWE
@@ -210,11 +211,7 @@ func (u *LoginUsecaseImpl) CompareHash(hashedPassword, password string) error {
 	return nil
 }
 
-func (u *LoginUsecaseImpl) StoreToken(token, username string, expire time.Duration, resultChannel chan ExecutionResultPackage.ExecutionResult) {
-	path := "LoginUsecase:StoreToken"
-
-	result := ExecutionResultPackage.ExecutionResult{}
-
+func (u *LoginUsecaseImpl) StoreToken(token, username string, expire time.Duration) {
 	// INIT ENTITY
 	entity := AuthenticationEntity.JWEToken{
 		Username:         username,
@@ -222,16 +219,8 @@ func (u *LoginUsecaseImpl) StoreToken(token, username string, expire time.Durati
 		JWT_TOKEN_PREFIX: Constants.UsernamePrefix,
 	}
 
-	if err := u.authenticationRepository.SetJWEToken(&entity, expire); err != nil {
-		result.SetResult(nil, err.(*CustomErrorPackage.CustomError).UnshiftPath(path))
-		resultChannel <- result
-		close(resultChannel)
-		return
-	}
-
-	result.SetResult(nil, nil)
-	resultChannel <- result
-	close(resultChannel)
+	// STORE TOKEN TO REDIS
+	u.authenticationRepository.SetJWEToken(&entity, expire)
 }
 
 func (u *LoginUsecaseImpl) GetTokenInRedis(username string) (*AuthenticationEntity.JWEToken, error) {

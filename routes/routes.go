@@ -8,6 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 
 	User "e-commerce/internal/authentication/delivery/presenter/http"
+	Product "e-commerce/internal/product/delivery/presenter/http"
+	Store "e-commerce/internal/store/delivery/presenter/http"
 	Library "e-commerce/library"
 	Middleware "e-commerce/middlewares"
 	UtilsPackage "e-commerce/pkg/utils"
@@ -23,6 +25,8 @@ type RoutesImpl struct {
 	library    Library.Library
 	middleware Middleware.Middleware
 	user       User.UserHandler
+	store      Store.StoreHandler
+	product    Product.ProductHandler
 }
 
 func New(
@@ -30,12 +34,16 @@ func New(
 	library Library.Library,
 	middleware Middleware.Middleware,
 	user User.UserHandler,
+	store Store.StoreHandler,
+	product Product.ProductHandler,
 ) Routes {
 	return &RoutesImpl{
 		engine:     engine,
 		library:    library,
 		middleware: middleware,
 		user:       user,
+		store:      store,
+		product:    product,
 	}
 }
 
@@ -53,6 +61,8 @@ func (o *RoutesImpl) Setup() {
 	// EMBED ROUTES
 	o.SetIndexRoute()
 	o.SetUserRoute()
+	o.SetStoreRoute()
+	o.SetProductRoute()
 }
 
 func (o *RoutesImpl) GetEngine() *gin.Engine {
@@ -82,4 +92,20 @@ func (o *RoutesImpl) SetUserRoute() {
 	logout := o.engine.Group("/api/v1/user")
 	logout.Use(o.middleware.GenerateTraceID(), o.middleware.ValidateToken(), o.middleware.Logging())
 	logout.POST("/logout", o.user.Logout)
+}
+
+func (o *RoutesImpl) SetStoreRoute() {
+	router := o.engine.Group("/api/v1/store")
+
+	router.Use(o.middleware.GenerateTraceID(), o.middleware.ValidateToken(), o.middleware.Logging())
+	router.POST("/create", o.store.CreateStore)
+	router.POST("/update", o.store.UpdateStore)
+	router.GET("/", o.store.GetStore)
+}
+
+func (o *RoutesImpl) SetProductRoute() {
+	router := o.engine.Group("/api/v1/product")
+
+	router.Use(o.middleware.GenerateTraceID(), o.middleware.ValidateToken(), o.middleware.Logging())
+	router.POST("/create", o.product.CreateProduct)
 }

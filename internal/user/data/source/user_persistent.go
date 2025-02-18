@@ -13,9 +13,10 @@ import (
 	EcommercePackage "e-commerce/pkg/data_sources/e-commerce"
 )
 
-type User interface {
+type UserPersistent interface {
 	GetDetail(username, email string) (*UserModel.User, error)
 	Create(param *UserModel.User) error
+	UpdateLastLogin(userID, lastLogin string) error
 }
 
 type UserImpl struct {
@@ -23,10 +24,10 @@ type UserImpl struct {
 	dbEcommerce EcommercePackage.Ecommerce
 }
 
-func NewUserImpl(
+func NewUserPersistent(
 	library Library.Library,
 	dbEcommerce EcommercePackage.Ecommerce,
-) User {
+) UserPersistent {
 	return &UserImpl{
 		library:     library,
 		dbEcommerce: dbEcommerce,
@@ -116,6 +117,33 @@ func (s *UserImpl) Create(param *UserModel.User) error {
 	//ASSERT POSGRES ERROR
 	var postgresError *pq.Error
 	if errors.As(err, &postgresError) && postgresError.Code == "23505" {
+		return CustomErrorPackage.New(Constants.ErrDuplicatedKey, err, path, s.library)
+	}
+
+	return CustomErrorPackage.New(Constants.ErrSomethingWentWrong, err, path, s.library)
+}
+
+func (s *UserImpl) UpdateLastLogin(userID, lastLogin string) error {
+	path := "UserPersistent:UpdateLastLogin"
+
+	err := s.dbEcommerce.GetConnection().Exec(`
+		UPDATE
+			users
+		SET
+			last_login = ?
+		WHERE
+			uuid = ?
+	`,
+		lastLogin,
+		userID,
+	).Error
+
+	if err == nil {
+		return nil
+	}
+	//ASSERT POSGRES ERROR
+	var postgresError *pq.Error
+	if errors.As(err, &postgresError) && postgresError.Code == Constants.PostgresErrorCode {
 		return CustomErrorPackage.New(Constants.ErrDuplicatedKey, err, path, s.library)
 	}
 

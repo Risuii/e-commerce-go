@@ -8,7 +8,8 @@ import (
 
 	Constants "e-commerce/constants"
 	AuthDTO "e-commerce/internal/authentication/delivery/dto"
-	AuthenticationUsecase "e-commerce/internal/authentication/domain/usecase"
+	StoreDTO "e-commerce/internal/store/delivery/dto"
+	StoreUsecase "e-commerce/internal/store/domain/usecase"
 	Library "e-commerce/library"
 	CustomErrorPackage "e-commerce/pkg/custom_error"
 	CustomValidationPackage "e-commerce/pkg/custom_validation"
@@ -16,189 +17,43 @@ import (
 	RequestPackage "e-commerce/pkg/request_information"
 )
 
-type UserHandler interface {
-	Register(*gin.Context)
-	Login(*gin.Context)
-	Logout(*gin.Context)
+type StoreHandler interface {
+	CreateStore(*gin.Context)
+	UpdateStore(*gin.Context)
+	GetStore(*gin.Context)
 }
 
-type UserHandlerImpl struct {
-	library          Library.Library
-	customValidation CustomValidationPackage.CustomValidation
-	registerUsecase  AuthenticationUsecase.RegisterUseCase
-	loginUsecase     AuthenticationUsecase.LoginUsecase
-	logoutUsecase    AuthenticationUsecase.LogoutUsecase
+type StoreHandlerImpl struct {
+	library            Library.Library
+	customValidation   CustomValidationPackage.CustomValidation
+	createStoreUsecase StoreUsecase.CreateStoreUsecase
+	updateStoreUsecase StoreUsecase.UpdateStoreUsecase
+	getStoreUsecase    StoreUsecase.GetStoreUsecase
 }
 
-func NewUserHandler(library Library.Library,
+func NewStoreHandler(
+	library Library.Library,
 	customValidation CustomValidationPackage.CustomValidation,
-	registerUsecase AuthenticationUsecase.RegisterUseCase,
-	loginUsecase AuthenticationUsecase.LoginUsecase,
-	logoutUsecase AuthenticationUsecase.LogoutUsecase,
-) UserHandler {
-	return &UserHandlerImpl{
-		library:          library,
-		customValidation: customValidation,
-		registerUsecase:  registerUsecase,
-		loginUsecase:     loginUsecase,
-		logoutUsecase:    logoutUsecase,
+	createStoreUsecase StoreUsecase.CreateStoreUsecase,
+	updateStoreUsecase StoreUsecase.UpdateStoreUsecase,
+	getStoreUsecase StoreUsecase.GetStoreUsecase,
+) StoreHandler {
+	return &StoreHandlerImpl{
+		library:            library,
+		customValidation:   customValidation,
+		createStoreUsecase: createStoreUsecase,
+		updateStoreUsecase: updateStoreUsecase,
+		getStoreUsecase:    getStoreUsecase,
 	}
 }
 
-func (h *UserHandlerImpl) Register(c *gin.Context) {
-	path := "AuthenticationHandler:Register"
+func (h *StoreHandlerImpl) CreateStore(c *gin.Context) {
+	path := "StoreHandler:CreateStore"
 
 	var response *gin.H
 
 	// INIT PARAM
-	var param AuthDTO.RegisterParam
-
-	// GET REQUEST
-	requestInformation := RequestPackage.RequestInformation{}
-	request := requestInformation.GetRequestInformation(c)
-
-	// GET TRACEID
-	traceID, exists := c.Get(Constants.TraceID)
-	if !exists {
-		err := CustomErrorPackage.New(Constants.ErrValidation, nil, path, h.library)
-		response = &gin.H{
-			Constants.Path:    path,
-			Constants.Message: Constants.ErrEmptyTraceID.Error(),
-		}
-		LoggerPackage.WriteLog(logrus.Fields{
-			Constants.Path:     err.(*CustomErrorPackage.CustomError).GetPath(),
-			Constants.Request:  request,
-			Constants.Response: response,
-		}).Debug()
-
-		c.JSON(http.StatusBadRequest, response)
-		return
-	}
-
-	// CHECK VALIDATION
-	errValidationPayload := param.Validate(requestInformation, h.library, h.customValidation)
-	if len(errValidationPayload) > 0 {
-		param.Password = Constants.NilString
-		err := CustomErrorPackage.New(Constants.ErrValidation, nil, Constants.NilString, h.library)
-		err = err.(*CustomErrorPackage.CustomError).FromListMap(errValidationPayload)
-		response = &gin.H{
-			Constants.TraceID: traceID,
-			Constants.Path:    path,
-			Constants.Message: err.(*CustomErrorPackage.CustomError).GetDisplay().Error(),
-			Constants.Data:    errValidationPayload,
-		}
-
-		c.JSON(http.StatusBadRequest, response)
-		c.Abort()
-		return
-	}
-
-	// LOGIC USECASE
-	usecase := h.registerUsecase
-	err := usecase.Index(param)
-	if err != nil {
-		response = &gin.H{
-			Constants.TraceID: traceID,
-			Constants.Path:    err.(*CustomErrorPackage.CustomError).GetPath(),
-			Constants.Message: err.(*CustomErrorPackage.CustomError).GetDisplay().Error(),
-		}
-
-		c.JSON(err.(*CustomErrorPackage.CustomError).GetCode(), response)
-		c.Abort()
-		return
-	}
-
-	// RESPONSE
-	response = &gin.H{
-		Constants.TraceID: traceID,
-		Constants.Path:    requestInformation.Path,
-		Constants.Message: Constants.MsgSuccessSaveRequest,
-	}
-
-	c.JSON(http.StatusCreated, response)
-}
-
-func (h *UserHandlerImpl) Login(c *gin.Context) {
-	path := "AuthenticationHandler:Login"
-
-	var response *gin.H
-
-	// INIT PARAM
-	var param AuthDTO.LoginParam
-
-	// GET REQUEST
-	requestInformation := RequestPackage.RequestInformation{}
-	request := requestInformation.GetRequestInformation(c)
-
-	// GET TRACEID
-	traceID, exists := c.Get(Constants.TraceID)
-	if !exists {
-		err := CustomErrorPackage.New(Constants.ErrValidation, nil, path, h.library)
-		response = &gin.H{
-			Constants.Path:    path,
-			Constants.Message: Constants.ErrEmptyTraceID.Error(),
-		}
-		LoggerPackage.WriteLog(logrus.Fields{
-			Constants.Path:     err.(*CustomErrorPackage.CustomError).GetPath(),
-			Constants.Request:  request,
-			Constants.Response: response,
-		}).Debug()
-
-		c.JSON(http.StatusBadRequest, response)
-		return
-	}
-
-	// CHECK VALIDATION
-	errValidationPayload := param.Validate(requestInformation, h.library, h.customValidation)
-	if len(errValidationPayload) > 0 {
-		param.Password = Constants.NilString
-		err := CustomErrorPackage.New(Constants.ErrValidation, nil, Constants.NilString, h.library)
-		err = err.(*CustomErrorPackage.CustomError).FromListMap(errValidationPayload)
-		response = &gin.H{
-			Constants.TraceID: traceID,
-			Constants.Path:    path,
-			Constants.Message: err.(*CustomErrorPackage.CustomError).GetDisplay().Error(),
-			Constants.Data:    errValidationPayload,
-		}
-
-		c.JSON(http.StatusBadRequest, response)
-		c.Abort()
-		return
-	}
-
-	// LOGIC USECASE
-	usecase := h.loginUsecase
-	token, err := usecase.Index(param)
-	if err != nil {
-		response = &gin.H{
-			Constants.TraceID: traceID,
-			Constants.Path:    err.(*CustomErrorPackage.CustomError).GetPath(),
-			Constants.Message: err.(*CustomErrorPackage.CustomError).GetDisplay().Error(),
-		}
-
-		c.JSON(err.(*CustomErrorPackage.CustomError).GetCode(), response)
-		c.Abort()
-		return
-	}
-
-	// RESPONSE
-	response = &gin.H{
-		Constants.TraceID: traceID,
-		Constants.Message: Constants.MsgSuccessRequest,
-		Constants.Path:    requestInformation.Path,
-		Constants.Token:   token,
-	}
-
-	c.JSON(http.StatusOK, response)
-}
-
-func (h *UserHandlerImpl) Logout(c *gin.Context) {
-	path := "AuthenticationHandler:Logout"
-
-	var response *gin.H
-
-	// INIT PARAM
-	var param AuthDTO.LogoutParam
+	var param StoreDTO.StoreParam
 
 	// GET REQUEST
 	requestInformation := RequestPackage.RequestInformation{}
@@ -223,7 +78,7 @@ func (h *UserHandlerImpl) Logout(c *gin.Context) {
 	}
 
 	// GET CREDENTIAL
-	credential, exists := c.Get(Constants.Credential)
+	credentialPayload, exists := c.Get(Constants.Credential)
 	if !exists {
 		err := CustomErrorPackage.New(Constants.ErrValidation, nil, path, h.library)
 		response = &gin.H{
@@ -240,26 +95,28 @@ func (h *UserHandlerImpl) Logout(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, response)
 		return
 	}
-	if err := h.library.JsonUnmarshal(credential.([]byte), &param); err != nil {
-		err := CustomErrorPackage.New(Constants.ErrValidation, nil, path, h.library)
+	credential := credentialPayload.(*AuthDTO.LogoutParam)
+
+	// CHECK VALIDATION
+	errValidationPayload := param.Validate(requestInformation, h.library, h.customValidation)
+	if len(errValidationPayload) > 0 {
+		err := CustomErrorPackage.New(Constants.ErrValidation, nil, Constants.NilString, h.library)
+		err = err.(*CustomErrorPackage.CustomError).FromListMap(errValidationPayload)
 		response = &gin.H{
 			Constants.TraceID: traceID,
 			Constants.Path:    path,
-			Constants.Message: Constants.ErrEmptyCredential.Error(),
+			Constants.Message: err.(*CustomErrorPackage.CustomError).GetDisplay().Error(),
+			Constants.Data:    errValidationPayload,
 		}
-		LoggerPackage.WriteLog(logrus.Fields{
-			Constants.Path:     err.(*CustomErrorPackage.CustomError).GetPath(),
-			Constants.Request:  request,
-			Constants.Response: response,
-		}).Debug()
 
 		c.JSON(http.StatusBadRequest, response)
+		c.Abort()
 		return
 	}
 
 	// LOGIC USECASE
-	usecase := h.logoutUsecase
-	err := usecase.Index(&param)
+	usecase := h.createStoreUsecase
+	err := usecase.Index(&param, credential)
 	if err != nil {
 		response = &gin.H{
 			Constants.TraceID: traceID,
@@ -276,8 +133,170 @@ func (h *UserHandlerImpl) Logout(c *gin.Context) {
 	response = &gin.H{
 		Constants.TraceID: traceID,
 		Constants.Path:    requestInformation.Path,
-		Constants.Message: Constants.MsgSuccessRequest,
+		Constants.Message: Constants.MsgSuccessSaveRequest,
 	}
 
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusCreated, response)
+}
+
+func (h *StoreHandlerImpl) UpdateStore(c *gin.Context) {
+	path := "StoreHandler:UpdateStore"
+
+	var response *gin.H
+
+	// INIT PARAM
+	var param StoreDTO.StoreParam
+
+	// GET REQUEST
+	requestInformation := RequestPackage.RequestInformation{}
+	request := requestInformation.GetRequestInformation(c)
+
+	// GET TRACEID
+	traceID, exists := c.Get(Constants.TraceID)
+	if !exists {
+		err := CustomErrorPackage.New(Constants.ErrValidation, nil, path, h.library)
+		response = &gin.H{
+			Constants.Path:    path,
+			Constants.Message: Constants.ErrEmptyTraceID.Error(),
+		}
+		LoggerPackage.WriteLog(logrus.Fields{
+			Constants.Path:     err.(*CustomErrorPackage.CustomError).GetPath(),
+			Constants.Request:  request,
+			Constants.Response: response,
+		}).Debug()
+
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	// GET CREDENTIAL
+	credentialPayload, exists := c.Get(Constants.Credential)
+	if !exists {
+		err := CustomErrorPackage.New(Constants.ErrValidation, nil, path, h.library)
+		response = &gin.H{
+			Constants.TraceID: traceID,
+			Constants.Path:    path,
+			Constants.Message: Constants.ErrEmptyCredential.Error(),
+		}
+		LoggerPackage.WriteLog(logrus.Fields{
+			Constants.Path:     err.(*CustomErrorPackage.CustomError).GetPath(),
+			Constants.Request:  request,
+			Constants.Response: response,
+		}).Debug()
+
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+	credential := credentialPayload.(*AuthDTO.LogoutParam)
+
+	// CHECK VALIDATION
+	errValidationPayload := param.Validate(requestInformation, h.library, h.customValidation)
+	if len(errValidationPayload) > 0 {
+		err := CustomErrorPackage.New(Constants.ErrValidation, nil, Constants.NilString, h.library)
+		err = err.(*CustomErrorPackage.CustomError).FromListMap(errValidationPayload)
+		response = &gin.H{
+			Constants.TraceID: traceID,
+			Constants.Path:    path,
+			Constants.Message: err.(*CustomErrorPackage.CustomError).GetDisplay().Error(),
+			Constants.Data:    errValidationPayload,
+		}
+
+		c.JSON(http.StatusBadRequest, response)
+		c.Abort()
+		return
+	}
+
+	// LOGIC USECASE
+	usecase := h.updateStoreUsecase
+	err := usecase.Index(&param, credential)
+	if err != nil {
+		response = &gin.H{
+			Constants.TraceID: traceID,
+			Constants.Path:    err.(*CustomErrorPackage.CustomError).GetPath(),
+			Constants.Message: err.(*CustomErrorPackage.CustomError).GetDisplay().Error(),
+		}
+
+		c.JSON(err.(*CustomErrorPackage.CustomError).GetCode(), response)
+		c.Abort()
+		return
+	}
+
+	// RESPONSE
+	response = &gin.H{
+		Constants.TraceID: traceID,
+		Constants.Path:    requestInformation.Path,
+		Constants.Message: Constants.MsgSuccessSaveRequest,
+	}
+
+	c.JSON(http.StatusCreated, response)
+}
+
+func (h *StoreHandlerImpl) GetStore(c *gin.Context) {
+	path := "StoreHandler:GetStore"
+
+	var response *gin.H
+
+	// GET REQUEST
+	requestInformation := RequestPackage.RequestInformation{}
+	requestInformation.GetRequestInformation(c)
+
+	// GET TRACEID
+	traceID, exists := c.Get(Constants.TraceID)
+	if !exists {
+		err := CustomErrorPackage.New(Constants.ErrValidation, nil, path, h.library)
+		response = &gin.H{
+			Constants.Path:    path,
+			Constants.Message: Constants.ErrEmptyTraceID.Error(),
+		}
+		LoggerPackage.WriteLog(logrus.Fields{
+			Constants.Path:     err.(*CustomErrorPackage.CustomError).GetPath(),
+			Constants.Response: response,
+		}).Debug()
+
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	// GET CREDENTIAL
+	credentialPayload, exists := c.Get(Constants.Credential)
+	if !exists {
+		err := CustomErrorPackage.New(Constants.ErrValidation, nil, path, h.library)
+		response = &gin.H{
+			Constants.TraceID: traceID,
+			Constants.Path:    path,
+			Constants.Message: Constants.ErrEmptyCredential.Error(),
+		}
+		LoggerPackage.WriteLog(logrus.Fields{
+			Constants.Path:     err.(*CustomErrorPackage.CustomError).GetPath(),
+			Constants.Response: response,
+		}).Debug()
+
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+	credential := credentialPayload.(*AuthDTO.LogoutParam)
+
+	// LOGIC USECASE
+	usecase := h.getStoreUsecase
+	responseDTO, err := usecase.Index(credential)
+	if err != nil {
+		response = &gin.H{
+			Constants.TraceID: traceID,
+			Constants.Path:    err.(*CustomErrorPackage.CustomError).GetPath(),
+			Constants.Message: err.(*CustomErrorPackage.CustomError).GetDisplay().Error(),
+		}
+
+		c.JSON(err.(*CustomErrorPackage.CustomError).GetCode(), response)
+		c.Abort()
+		return
+	}
+
+	response = &gin.H{
+		Constants.TraceID: traceID,
+		Constants.Path:    requestInformation.Path,
+		Constants.Message: Constants.MsgSuccessRequest,
+		Constants.Data:    responseDTO,
+	}
+
+	c.JSON(http.StatusCreated, response)
 }

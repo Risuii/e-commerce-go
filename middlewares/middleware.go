@@ -2,14 +2,17 @@ package middlewares
 
 import (
 	"bytes"
+	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 
 	Config "e-commerce/config"
 	Constants "e-commerce/constants"
+	AuthDTO "e-commerce/internal/authentication/delivery/dto"
 	LoggingUsecase "e-commerce/internal/logging/domain/usecase"
 	Library "e-commerce/library"
 	CustomErrorPackage "e-commerce/pkg/custom_error"
@@ -153,10 +156,8 @@ func (m *MiddlewareImpl) ValidateToken() gin.HandlerFunc {
 			err := CustomErrorPackage.New(Constants.ErrInvalidJWE, Constants.ErrInvalidJWE, path, m.library)
 
 			response = &gin.H{
-				Constants.TraceID:    traceID,
-				Constants.Status:     true,
-				Constants.CodeStatus: Constants.StatusAuthenticationFailuer,
-				Constants.Message:    Constants.ErrAuthorizationBearer.Error(),
+				Constants.TraceID: traceID,
+				Constants.Message: Constants.ErrUnauthorized.Error(),
 			}
 
 			LoggerPackage.WriteLog(logrus.Fields{
@@ -168,8 +169,26 @@ func (m *MiddlewareImpl) ValidateToken() gin.HandlerFunc {
 			return
 		}
 
+		var credentials *AuthDTO.LogoutParam
+		if err := m.library.JsonUnmarshal(credential, &credentials); err != nil {
+			err := CustomErrorPackage.New(Constants.ErrValidation, nil, path, m.library)
+			response = &gin.H{
+				Constants.TraceID: traceID,
+				Constants.Path:    path,
+				Constants.Message: Constants.ErrEmptyCredential.Error(),
+			}
+			LoggerPackage.WriteLog(logrus.Fields{
+				Constants.Path:     err.(*CustomErrorPackage.CustomError).GetPath(),
+				Constants.Request:  request,
+				Constants.Response: response,
+			}).Debug()
+
+			c.JSON(http.StatusBadRequest, response)
+			return
+		}
+
 		// SET CREDENTIAL TO CONTEXT
-		c.Set(Constants.Credential, credential)
+		c.Set(Constants.Credential, credentials)
 
 		// CONTINUE TO API
 		c.Next()
@@ -274,8 +293,9 @@ func (m *MiddlewareImpl) Logging() gin.HandlerFunc {
 		}
 
 		// WRITE NEW RESPONSE
-		c.Writer.Header().Set("Content-Type", "application/json")
+		c.Writer.Header().Set(Constants.ContentType, Constants.ApplicationJson)
 		c.Writer.WriteHeader(writer.StatusCode)
+		fmt.Println(time.Now().Format(Constants.YYYMMDDHHMMSS), Constants.TraceID, traceID)
 		writer.WriteResponse([]byte(response))
 	}
 }

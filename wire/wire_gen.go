@@ -15,6 +15,11 @@ import (
 	"e-commerce/internal/logging/data/repository"
 	"e-commerce/internal/logging/data/source"
 	"e-commerce/internal/logging/domain/usecase"
+	http3 "e-commerce/internal/product/delivery/presenter/http"
+	repository4 "e-commerce/internal/store/data/repository"
+	source4 "e-commerce/internal/store/data/source"
+	http2 "e-commerce/internal/store/delivery/presenter/http"
+	usecase3 "e-commerce/internal/store/domain/usecase"
 	repository2 "e-commerce/internal/user/data/repository"
 	source2 "e-commerce/internal/user/data/source"
 	"e-commerce/library"
@@ -43,8 +48,8 @@ func InjectRoute(config2 config.Config, library2 library.Library) routes.Routes 
 	customValidation := custom_validation.NewCustomValidation(config2, library2)
 	customCrypto := utils.NewCustomCrypto(config2, library2)
 	bcrypt := provider.NewBcrypt()
-	user := source2.NewUserImpl(library2, ecommerceEcommerce)
-	userRepository := repository2.NewUser(user)
+	userPersistent := source2.NewUserPersistent(library2, ecommerceEcommerce)
+	userRepository := repository2.NewUserRepository(userPersistent)
 	registerUseCase := usecase2.NewRegisterUseCase(library2, customCrypto, config2, bcrypt, repositoryLogActivity, userRepository)
 	redis := cache_data_source.New(config2, library2)
 	authenticationMemory := source3.NewAuthenticationMemory(config2, library2, redis)
@@ -52,10 +57,17 @@ func InjectRoute(config2 config.Config, library2 library.Library) routes.Routes 
 	loginUsecase := usecase2.NewLoginUsecase(jwe, bcrypt, customCrypto, library2, config2, userRepository, authenticationRepository)
 	logoutUsecase := usecase2.NewLogoutUsecase(library2, authenticationRepository)
 	userHandler := http.NewUserHandler(library2, customValidation, registerUseCase, loginUsecase, logoutUsecase)
-	routesRoutes := routes.New(engine, library2, middleware, userHandler)
+	storePersistent := source4.NewStorePersistent(library2, ecommerceEcommerce)
+	storeRepository := repository4.NewStoreRepository(storePersistent)
+	createStoreUsecase := usecase3.NewCreateStoreUsecase(library2, storeRepository)
+	updateStoreUsecase := usecase3.NewUpdateStoreUsecase(library2, storeRepository)
+	getStoreUsecase := usecase3.NewGetStoreUsecase(library2, storeRepository)
+	storeHandler := http2.NewStoreHandler(library2, customValidation, createStoreUsecase, updateStoreUsecase, getStoreUsecase)
+	productHandler := http3.NewProductHandler(library2, customValidation)
+	routesRoutes := routes.New(engine, library2, middleware, userHandler, storeHandler, productHandler)
 	return routesRoutes
 }
 
 // wire.go:
 
-var ProviderSet = wire.NewSet(gin.New, utils.NewCustomCrypto, provider.NewBcrypt, custom_validation.NewCustomValidation, jwt.NewJWE, ecommerce.New, cache_data_source.New, source.NewLogActivityPersistent, source2.NewUserImpl, source3.NewAuthenticationMemory, repository.NewLogActivity, repository2.NewUser, repository3.NewAuthenticationRepository, usecase2.NewRegisterUseCase, usecase2.NewLoginUsecase, usecase2.NewLogoutUsecase, usecase.NewLogUsecase, http.NewUserHandler, middlewares.NewMiddleware, routes.New)
+var ProviderSet = wire.NewSet(gin.New, utils.NewCustomCrypto, provider.NewBcrypt, custom_validation.NewCustomValidation, jwt.NewJWE, ecommerce.New, cache_data_source.New, source.NewLogActivityPersistent, source2.NewUserPersistent, source3.NewAuthenticationMemory, source4.NewStorePersistent, repository.NewLogActivity, repository2.NewUserRepository, repository3.NewAuthenticationRepository, repository4.NewStoreRepository, usecase2.NewRegisterUseCase, usecase2.NewLoginUsecase, usecase2.NewLogoutUsecase, usecase.NewLogUsecase, usecase3.NewCreateStoreUsecase, usecase3.NewUpdateStoreUsecase, usecase3.NewGetStoreUsecase, http.NewUserHandler, http2.NewStoreHandler, http3.NewProductHandler, middlewares.NewMiddleware, routes.New)
