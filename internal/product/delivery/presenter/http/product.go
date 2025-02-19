@@ -26,4 +26,7 @@ func NewProductHandler(
 	}
 }
 
-func (h *ProductHandlerImpl) CreateProduct(c *gin.Context) {}
+func (h *ProductHandlerImpl) CreateProduct(c *gin.Context) {
+	// path := "ProductHandler:CreateProduct"
+
+}

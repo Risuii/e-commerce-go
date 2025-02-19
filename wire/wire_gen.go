@@ -62,7 +62,8 @@ func InjectRoute(config2 config.Config, library2 library.Library) routes.Routes 
 	createStoreUsecase := usecase3.NewCreateStoreUsecase(library2, storeRepository)
 	updateStoreUsecase := usecase3.NewUpdateStoreUsecase(library2, storeRepository)
 	getStoreUsecase := usecase3.NewGetStoreUsecase(library2, storeRepository)
-	storeHandler := http2.NewStoreHandler(library2, customValidation, createStoreUsecase, updateStoreUsecase, getStoreUsecase)
+	changeStoreStatusUsecase := usecase3.NewChangeStoreStatus(library2, storeRepository)
+	storeHandler := http2.NewStoreHandler(library2, customValidation, createStoreUsecase, updateStoreUsecase, getStoreUsecase, changeStoreStatusUsecase)
 	productHandler := http3.NewProductHandler(library2, customValidation)
 	routesRoutes := routes.New(engine, library2, middleware, userHandler, storeHandler, productHandler)
 	return routesRoutes
@@ -70,4 +71,4 @@ func InjectRoute(config2 config.Config, library2 library.Library) routes.Routes 
 
 // wire.go:
 
-var ProviderSet = wire.NewSet(gin.New, utils.NewCustomCrypto, provider.NewBcrypt, custom_validation.NewCustomValidation, jwt.NewJWE, ecommerce.New, cache_data_source.New, source.NewLogActivityPersistent, source2.NewUserPersistent, source3.NewAuthenticationMemory, source4.NewStorePersistent, repository.NewLogActivity, repository2.NewUserRepository, repository3.NewAuthenticationRepository, repository4.NewStoreRepository, usecase2.NewRegisterUseCase, usecase2.NewLoginUsecase, usecase2.NewLogoutUsecase, usecase.NewLogUsecase, usecase3.NewCreateStoreUsecase, usecase3.NewUpdateStoreUsecase, usecase3.NewGetStoreUsecase, http.NewUserHandler, http2.NewStoreHandler, http3.NewProductHandler, middlewares.NewMiddleware, routes.New)
+var ProviderSet = wire.NewSet(gin.New, utils.NewCustomCrypto, provider.NewBcrypt, custom_validation.NewCustomValidation, jwt.NewJWE, ecommerce.New, cache_data_source.New, source.NewLogActivityPersistent, source2.NewUserPersistent, source3.NewAuthenticationMemory, source4.NewStorePersistent, repository.NewLogActivity, repository2.NewUserRepository, repository3.NewAuthenticationRepository, repository4.NewStoreRepository, usecase2.NewRegisterUseCase, usecase2.NewLoginUsecase, usecase2.NewLogoutUsecase, usecase.NewLogUsecase, usecase3.NewCreateStoreUsecase, usecase3.NewUpdateStoreUsecase, usecase3.NewGetStoreUsecase, usecase3.NewChangeStoreStatus, http.NewUserHandler, http2.NewStoreHandler, http3.NewProductHandler, middlewares.NewMiddleware, routes.New)

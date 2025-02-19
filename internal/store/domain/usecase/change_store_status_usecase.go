@@ -13,27 +13,27 @@ import (
 	CustomErrorPackage "e-commerce/pkg/custom_error"
 )
 
-type UpdateStoreUsecase interface {
-	Index(param *StoreDTO.StoreParam, credential *AuthDTO.LogoutParam) error
+type ChangeStoreStatusUsecase interface {
+	Index(param *StoreDTO.StoreStatusParam, credential *AuthDTO.LogoutParam) error
 }
 
-type UpdateStoreUsecaseImpl struct {
+type ChangeStoreStatusUsecaseImpl struct {
 	library         Library.Library
 	storeRepository StoreRepository.StoreRepository
 }
 
-func NewUpdateStoreUsecase(
+func NewChangeStoreStatus(
 	library Library.Library,
 	storeRepository StoreRepository.StoreRepository,
-) UpdateStoreUsecase {
-	return &UpdateStoreUsecaseImpl{
+) ChangeStoreStatusUsecase {
+	return &ChangeStoreStatusUsecaseImpl{
 		library:         library,
 		storeRepository: storeRepository,
 	}
 }
 
-func (u *UpdateStoreUsecaseImpl) Index(param *StoreDTO.StoreParam, credential *AuthDTO.LogoutParam) error {
-	path := "CreateStoreUsecase:Index"
+func (u *ChangeStoreStatusUsecaseImpl) Index(param *StoreDTO.StoreStatusParam, credential *AuthDTO.LogoutParam) error {
+	path := "ChangeStoreStatusUsecase:Index"
 
 	// GET STORE DETAIL
 	store, err := u.GetStore(credential.UserID)
@@ -48,15 +48,8 @@ func (u *UpdateStoreUsecaseImpl) Index(param *StoreDTO.StoreParam, credential *A
 		return err.(*CustomErrorPackage.CustomError).UnshiftPath(path)
 	}
 
-	// CHECKING STORE STATUS
-	if store.Status == Constants.StoreStatusNotActive {
-		err := CustomErrorPackage.New(Constants.ErrStoreNotFound, Constants.ErrStoreNotFound, path, u.library)
-		err.(*CustomErrorPackage.CustomError).SetCode(http.StatusNotFound)
-		return err.(*CustomErrorPackage.CustomError).UnshiftPath(path)
-	}
-
-	// UPDATE STORE
-	err = u.UpdateStore(store.StoreID, param.StoreName, param.Description, store.Status)
+	// UPDATE STORE STATUS
+	err = u.UpdateStoreStatus(store.StoreID, store.StoreName, store.Description, param.Status)
 	if err != nil {
 		return err.(*CustomErrorPackage.CustomError).UnshiftPath(path)
 	}
@@ -64,8 +57,8 @@ func (u *UpdateStoreUsecaseImpl) Index(param *StoreDTO.StoreParam, credential *A
 	return nil
 }
 
-func (u *UpdateStoreUsecaseImpl) GetStore(userID string) (*StoreEntity.Store, error) {
-	path := "CreateStoreUsecase:GetStore"
+func (u *ChangeStoreStatusUsecaseImpl) GetStore(userID string) (*StoreEntity.Store, error) {
+	path := "ChangeStoreStatusUsecase:GetStore"
 
 	// FIND STORE BY USER ID IN DB
 	entity, err := u.storeRepository.GetStore(userID)
@@ -76,8 +69,8 @@ func (u *UpdateStoreUsecaseImpl) GetStore(userID string) (*StoreEntity.Store, er
 	return entity, nil
 }
 
-func (u *UpdateStoreUsecaseImpl) UpdateStore(storeID, storeName, description, status string) error {
-	path := "CreateStoreUsecase:UpdateStore"
+func (u *ChangeStoreStatusUsecaseImpl) UpdateStoreStatus(storeID, storeName, description, status string) error {
+	path := "ChangeStoreStatusUsecase:UpdateStore"
 
 	// SET ENTITY STORE
 	entity := StoreEntity.Store{

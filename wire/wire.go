@@ -76,6 +76,7 @@ var ProviderSet = wire.NewSet(
 	StoreUsecase.NewCreateStoreUsecase,
 	StoreUsecase.NewUpdateStoreUsecase,
 	StoreUsecase.NewGetStoreUsecase,
+	StoreUsecase.NewChangeStoreStatus,
 
 	// HANDLER
 	AuthenticationHandler.NewUserHandler,

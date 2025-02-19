@@ -53,7 +53,7 @@ func (u *CreateStoreUsecaseImpl) Index(param *StoreDTO.StoreParam, credential *A
 
 	// CHECKING STORE IS EXIST
 	if store != nil {
-		err := CustomErrorPackage.New(Constants.ErrOneStore, Constants.ErrOneStore, path, u.library)
+		err := CustomErrorPackage.New(u.MappingStoreStatus(store.Status), u.MappingStoreStatus(store.Status), path, u.library)
 		err.(*CustomErrorPackage.CustomError).SetCode(http.StatusConflict)
 		return err.(*CustomErrorPackage.CustomError).UnshiftPath(path)
 	}
@@ -129,6 +129,7 @@ func (u *CreateStoreUsecaseImpl) InsertStore(storeID, storeName, description, us
 		StoreName:   storeName,
 		Description: description,
 		UserID:      userID,
+		Status:      Constants.StoreStatusActive,
 		CreatedAt:   time.Now().Format(Constants.YYYMMDDHHMMSS),
 	}
 
@@ -139,4 +140,13 @@ func (u *CreateStoreUsecaseImpl) InsertStore(storeID, storeName, description, us
 	}
 
 	return nil
+}
+
+func (u *CreateStoreUsecaseImpl) MappingStoreStatus(status string) error {
+	err := map[string]error{
+		Constants.StoreStatusActive:    Constants.ErrOneStore,
+		Constants.StoreStatusNotActive: Constants.ErrInactiveStore,
+	}
+
+	return err[status]
 }

@@ -101,6 +101,7 @@ func (o *RoutesImpl) SetStoreRoute() {
 	router.POST("/create", o.store.CreateStore)
 	router.POST("/update", o.store.UpdateStore)
 	router.GET("/", o.store.GetStore)
+	router.POST("/change-status", o.store.ChangeStoreStatus)
 }
 
 func (o *RoutesImpl) SetProductRoute() {

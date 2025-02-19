@@ -21,14 +21,16 @@ type StoreHandler interface {
 	CreateStore(*gin.Context)
 	UpdateStore(*gin.Context)
 	GetStore(*gin.Context)
+	ChangeStoreStatus(*gin.Context)
 }
 
 type StoreHandlerImpl struct {
-	library            Library.Library
-	customValidation   CustomValidationPackage.CustomValidation
-	createStoreUsecase StoreUsecase.CreateStoreUsecase
-	updateStoreUsecase StoreUsecase.UpdateStoreUsecase
-	getStoreUsecase    StoreUsecase.GetStoreUsecase
+	library                  Library.Library
+	customValidation         CustomValidationPackage.CustomValidation
+	createStoreUsecase       StoreUsecase.CreateStoreUsecase
+	updateStoreUsecase       StoreUsecase.UpdateStoreUsecase
+	getStoreUsecase          StoreUsecase.GetStoreUsecase
+	changeStoreStatusUsecase StoreUsecase.ChangeStoreStatusUsecase
 }
 
 func NewStoreHandler(
@@ -37,13 +39,15 @@ func NewStoreHandler(
 	createStoreUsecase StoreUsecase.CreateStoreUsecase,
 	updateStoreUsecase StoreUsecase.UpdateStoreUsecase,
 	getStoreUsecase StoreUsecase.GetStoreUsecase,
+	changeStoreStatusUsecase StoreUsecase.ChangeStoreStatusUsecase,
 ) StoreHandler {
 	return &StoreHandlerImpl{
-		library:            library,
-		customValidation:   customValidation,
-		createStoreUsecase: createStoreUsecase,
-		updateStoreUsecase: updateStoreUsecase,
-		getStoreUsecase:    getStoreUsecase,
+		library:                  library,
+		customValidation:         customValidation,
+		createStoreUsecase:       createStoreUsecase,
+		updateStoreUsecase:       updateStoreUsecase,
+		getStoreUsecase:          getStoreUsecase,
+		changeStoreStatusUsecase: changeStoreStatusUsecase,
 	}
 }
 
@@ -296,6 +300,98 @@ func (h *StoreHandlerImpl) GetStore(c *gin.Context) {
 		Constants.Path:    requestInformation.Path,
 		Constants.Message: Constants.MsgSuccessRequest,
 		Constants.Data:    responseDTO,
+	}
+
+	c.JSON(http.StatusCreated, response)
+}
+
+func (h *StoreHandlerImpl) ChangeStoreStatus(c *gin.Context) {
+	path := "StoreHandler:ChangeStoreStatus"
+
+	var response *gin.H
+
+	// INIT PARAM
+	var param StoreDTO.StoreStatusParam
+
+	// GET REQUEST
+	requestInformation := RequestPackage.RequestInformation{}
+	request := requestInformation.GetRequestInformation(c)
+
+	// GET TRACEID
+	traceID, exists := c.Get(Constants.TraceID)
+	if !exists {
+		err := CustomErrorPackage.New(Constants.ErrValidation, nil, path, h.library)
+		response = &gin.H{
+			Constants.Path:    path,
+			Constants.Message: Constants.ErrEmptyTraceID.Error(),
+		}
+		LoggerPackage.WriteLog(logrus.Fields{
+			Constants.Path:     err.(*CustomErrorPackage.CustomError).GetPath(),
+			Constants.Request:  request,
+			Constants.Response: response,
+		}).Debug()
+
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	// GET CREDENTIAL
+	credentialPayload, exists := c.Get(Constants.Credential)
+	if !exists {
+		err := CustomErrorPackage.New(Constants.ErrValidation, nil, path, h.library)
+		response = &gin.H{
+			Constants.TraceID: traceID,
+			Constants.Path:    path,
+			Constants.Message: Constants.ErrEmptyCredential.Error(),
+		}
+		LoggerPackage.WriteLog(logrus.Fields{
+			Constants.Path:     err.(*CustomErrorPackage.CustomError).GetPath(),
+			Constants.Request:  request,
+			Constants.Response: response,
+		}).Debug()
+
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+	credential := credentialPayload.(*AuthDTO.LogoutParam)
+
+	// CHECK VALIDATION
+	errValidationPayload := param.Validate(requestInformation, h.library, h.customValidation)
+	if len(errValidationPayload) > 0 {
+		err := CustomErrorPackage.New(Constants.ErrValidation, nil, Constants.NilString, h.library)
+		err = err.(*CustomErrorPackage.CustomError).FromListMap(errValidationPayload)
+		response = &gin.H{
+			Constants.TraceID: traceID,
+			Constants.Path:    path,
+			Constants.Message: err.(*CustomErrorPackage.CustomError).GetDisplay().Error(),
+			Constants.Data:    errValidationPayload,
+		}
+
+		c.JSON(http.StatusBadRequest, response)
+		c.Abort()
+		return
+	}
+
+	// LOGIC USECASE
+	usecase := h.changeStoreStatusUsecase
+	err := usecase.Index(&param, credential)
+	if err != nil {
+		response = &gin.H{
+			Constants.TraceID: traceID,
+			Constants.Path:    err.(*CustomErrorPackage.CustomError).GetPath(),
+			Constants.Message: err.(*CustomErrorPackage.CustomError).GetDisplay().Error(),
+		}
+
+		c.JSON(err.(*CustomErrorPackage.CustomError).GetCode(), response)
+		c.Abort()
+		return
+	}
+
+	// RESPONSE
+	response = &gin.H{
+		Constants.TraceID: traceID,
+		Constants.Path:    requestInformation.Path,
+		Constants.Message: Constants.MsgSuccessRequest,
 	}
 
 	c.JSON(http.StatusCreated, response)

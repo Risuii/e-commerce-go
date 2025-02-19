@@ -89,7 +89,7 @@ func (u *LoginUsecaseImpl) Index(param AuthDTO.LoginParam) (string, error) {
 	}
 	user := UserDetail.GetData().(*UserEntity.User)
 	if user == nil {
-		err := CustomErrorPackage.New(Constants.ErrUserNotFound, Constants.ErrUserNotFound, path, u.library)
+		err := CustomErrorPackage.New(Constants.ErrWrongEmailOrUsername, Constants.ErrWrongEmailOrUsername, path, u.library)
 		err.(*CustomErrorPackage.CustomError).SetCode(http.StatusUnauthorized)
 		return Constants.NilString, err.(*CustomErrorPackage.CustomError).UnshiftPath(path)
 	}

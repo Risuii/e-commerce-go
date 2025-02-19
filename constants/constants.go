@@ -6,4 +6,5 @@ const (
 	Json           = "json"
 	UsernamePrefix = "username:"
 	Credential     = "credential"
+	Colon          = ":"
 )

@@ -69,7 +69,7 @@ func (s *UserImpl) GetDetail(username, email string) (*UserModel.User, error) {
 	}
 
 	if len(queryWheres) > 0 {
-		query += " WHERE " + s.library.StringsJoin(queryWheres, " AND ")
+		query += " WHERE " + s.library.StringsJoin(queryWheres, " OR ")
 	}
 
 	var model *UserModel.User

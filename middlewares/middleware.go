@@ -295,7 +295,7 @@ func (m *MiddlewareImpl) Logging() gin.HandlerFunc {
 		// WRITE NEW RESPONSE
 		c.Writer.Header().Set(Constants.ContentType, Constants.ApplicationJson)
 		c.Writer.WriteHeader(writer.StatusCode)
-		fmt.Println(time.Now().Format(Constants.YYYMMDDHHMMSS), Constants.TraceID, traceID)
+		fmt.Println(time.Now().Format(Constants.YYYMMDDHHMMSS), Constants.TraceID+Constants.Colon, traceID)
 		writer.WriteResponse([]byte(response))
 	}
 }

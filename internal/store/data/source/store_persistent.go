@@ -43,16 +43,18 @@ func (s *StorePersistentImpl) Create(param *StoreModel.Store) error {
 			store_name,
 			description,
 			user_id,
+			status,
 			created_at
 		) 
 		VALUES (
-			?, ?, ?, ?, ?
+			?, ?, ?, ?, ?, ?
 		)
 	`,
 		param.StoreID,
 		param.StoreName,
 		param.Description,
 		param.UserID,
+		param.Status,
 		param.CreatedAt,
 	).Error
 
@@ -78,12 +80,14 @@ func (s *StorePersistentImpl) Update(param *StoreModel.Store) error {
 		SET
 			store_name = ?,
 			description = ?,
+			status = ?,
 			updated_at = ?
 		WHERE
 			store_id = ?
 	`,
 		param.StoreName,
 		param.Description,
+		param.Status,
 		param.UpdatedAt,
 		param.StoreID,
 	).Error
@@ -109,6 +113,7 @@ func (s *StorePersistentImpl) GetStore(userID string) (*StoreModel.Store, error)
 			store_name,
 			description,
 			user_id,
+			status,
 			created_at,
 			updated_at
 		FROM

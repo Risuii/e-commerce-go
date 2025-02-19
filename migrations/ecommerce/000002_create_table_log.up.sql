@@ -3,7 +3,7 @@ BEGIN
 	CREATE TABLE IF NOT EXISTS activity_log (
 		trace_id varchar(100) NOT NULL,
 		endpoint varchar(100) NULL,
-		"path" varchar(100) NULL,
+		"path" varchar(265) NULL,
 		description text NULL,
 		created_at varchar(100) NULL,
 		request_payload text NULL,

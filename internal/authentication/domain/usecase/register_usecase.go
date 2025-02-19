@@ -61,7 +61,7 @@ func (u *RegisterUseCaseImpl) Index(param AuthDTO.RegisterParam) error {
 
 	// DO GOROUTINE
 	go u.GenerateID(IDChannel)
-	go u.GetDetailUsers(param.Username, UserChannel)
+	go u.GetDetailUsers(param.Username, param.Email, UserChannel)
 	go u.HashPassword(param.Password, PasswordChannel)
 
 	// GET ID FROM CHANNEL
@@ -119,14 +119,14 @@ func (u *RegisterUseCaseImpl) GenerateID(resultChannel chan ExecutionResultPacka
 	close(resultChannel)
 }
 
-func (u *RegisterUseCaseImpl) GetDetailUsers(username string, resultChannel chan ExecutionResultPackage.ExecutionResult) {
+func (u *RegisterUseCaseImpl) GetDetailUsers(username, email string, resultChannel chan ExecutionResultPackage.ExecutionResult) {
 	path := "RegisterUsecase:GetDetailUsers"
 
 	// INIT CHANNEL
 	result := ExecutionResultPackage.ExecutionResult{}
 
 	// GET USER DATA
-	entity, err := u.userRepository.GetDetailUsers(strings.ToLower(username), Constants.NilString)
+	entity, err := u.userRepository.GetDetailUsers(strings.ToLower(username), strings.ToLower(email))
 	if err != nil {
 		result.SetResult(nil, err.(*CustomErrorPackage.CustomError).UnshiftPath(path))
 		resultChannel <- result

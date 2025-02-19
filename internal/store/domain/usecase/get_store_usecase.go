@@ -1,6 +1,8 @@
 package usecase
 
 import (
+	"net/http"
+
 	Constants "e-commerce/constants"
 	AuthDTO "e-commerce/internal/authentication/delivery/dto"
 	StoreDTO "e-commerce/internal/store/delivery/dto"
@@ -8,7 +10,6 @@ import (
 	StoreRepository "e-commerce/internal/store/domain/repository"
 	Library "e-commerce/library"
 	CustomErrorPackage "e-commerce/pkg/custom_error"
-	"net/http"
 )
 
 type GetStoreUsecase interface {
@@ -41,6 +42,13 @@ func (u *GetStoreUsecaseImpl) Index(credential *AuthDTO.LogoutParam) (*StoreDTO.
 
 	// CHECKING STORE IS EXIST
 	if store == nil {
+		err := CustomErrorPackage.New(Constants.ErrStoreNotFound, Constants.ErrStoreNotFound, path, u.library)
+		err.(*CustomErrorPackage.CustomError).SetCode(http.StatusNotFound)
+		return nil, err.(*CustomErrorPackage.CustomError).UnshiftPath(path)
+	}
+
+	// CHECKING STORE STATUS
+	if store.Status == Constants.StoreStatusNotActive {
 		err := CustomErrorPackage.New(Constants.ErrStoreNotFound, Constants.ErrStoreNotFound, path, u.library)
 		err.(*CustomErrorPackage.CustomError).SetCode(http.StatusNotFound)
 		return nil, err.(*CustomErrorPackage.CustomError).UnshiftPath(path)

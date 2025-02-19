@@ -5,6 +5,7 @@ type Store struct {
 	StoreName   string `db:"store_name" gorm:"column:store_name"`
 	Description string `db:"description" gorm:"column:description"`
 	UserID      string `db:"user_id" gorm:"column:user_id"`
+	Status      string `db:"status" gorm:"column:status"`
 	CreatedAt   string `db:"created_at" gorm:"column:created_at"`
 	UpdatedAt   string `db:"updated_at" gorm:"column:updated_at"`
 }

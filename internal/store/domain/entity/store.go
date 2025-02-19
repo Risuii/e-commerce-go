@@ -9,6 +9,7 @@ type Store struct {
 	StoreName   string
 	Description string
 	UserID      string
+	Status      string
 	CreatedAt   string
 	UpdatedAt   string
 }
@@ -19,7 +20,9 @@ func (e Store) FromModel(model *StoreModel.Store) *Store {
 		StoreName:   model.StoreName,
 		Description: model.Description,
 		UserID:      model.UserID,
+		Status:      model.Status,
 		CreatedAt:   model.CreatedAt,
+		UpdatedAt:   model.UpdatedAt,
 	}
 
 	return &result
@@ -31,7 +34,9 @@ func (e Store) ToModel() *StoreModel.Store {
 		StoreName:   e.StoreName,
 		Description: e.Description,
 		UserID:      e.UserID,
+		Status:      e.Status,
 		CreatedAt:   e.CreatedAt,
+		UpdatedAt:   e.UpdatedAt,
 	}
 
 	return &result

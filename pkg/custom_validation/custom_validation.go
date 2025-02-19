@@ -160,6 +160,11 @@ func (u *CustomValidationImpl) GetCustomErrorMessage(validationErrors validator.
 				"field":   verr.Field(),
 				"message": Constants.ErrAlphaNumeric.Error(),
 			})
+		case Constants.Email:
+			errors = append(errors, map[string]interface{}{
+				"field":   verr.Field(),
+				"message": Constants.ErrEmail.Error(),
+			})
 		case Constants.ValidationEmailRequiredWithout:
 			errors = append(errors, map[string]interface{}{
 				"field":   verr.Field(),
